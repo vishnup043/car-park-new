@@ -10,13 +10,15 @@ import {
   ExternalLink,
   Pencil,
   XCircle,
-  History,
+  History as HistoryIcon,
   TrendingUp,
   Calendar,
-  DollarSign
+  DollarSign,
+  MapPin,
+  Tag
 } from 'lucide-react';
 import { db } from '../db';
-import { Job, JobStatus, Customer, Vehicle } from '../types';
+import { Job, JobStatus, Customer } from '../types';
 
 interface JobListProps {
   searchTerm: string;
@@ -28,172 +30,200 @@ interface JobListProps {
 const JobList: React.FC<JobListProps> = ({ searchTerm, onEditJob, filterCustomerId, onClearFilter }) => {
   const [activeFilter, setActiveFilter] = useState<JobStatus | 'All'>('All');
   const [jobs, setJobs] = useState<Job[]>(db.getJobs());
-  const customers = db.getCustomers();
-  const vehicles = db.getVehicles();
 
   const filteredJobs = useMemo(() => {
-    let list = jobs;
+    let list = [...jobs];
     
     // Filter by specific customer history if provided
     if (filterCustomerId) {
-      list = list.filter(j => j.customerId === filterCustomerId);
+      const refJob = jobs.find(j => j.id === filterCustomerId);
+      if (refJob) {
+        list = list.filter(j => j.customerMobile === refJob.customerMobile);
+      }
     }
     
-    // Filter by status tab
-    if (activeFilter !== 'All') {
+    // Filter by status tab (Only if not in History view)
+    if (!filterCustomerId && activeFilter !== 'All') {
       list = list.filter(j => j.status === activeFilter);
     }
     
     // Filter by search term
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      list = list.filter(j => {
-        const customer = customers.find(c => c.id === j.customerId);
-        const vehicle = vehicles.find(v => v.id === j.vehicleId);
-        return (
-          customer?.name.toLowerCase().includes(term) ||
-          customer?.mobile.includes(term) ||
-          vehicle?.vehicleNumber.toLowerCase().includes(term)
-        );
-      });
+      list = list.filter(j => 
+        (j.customerName || '').toLowerCase().includes(term) ||
+        (j.customerMobile || '').includes(term) ||
+        (j.vehicleNumber || '').toLowerCase().includes(term)
+      );
     }
     
-    return list.sort((a, b) => b.dateIn - a.dateIn);
-  }, [jobs, activeFilter, searchTerm, customers, vehicles, filterCustomerId]);
+    // Newest first by default
+    // Safe Sort: Handles both string and numeric date types
+    return list.sort((a, b) => new Date(b.dateIn).getTime() - new Date(a.dateIn).getTime());
+  }, [jobs, activeFilter, searchTerm, filterCustomerId]);
 
   const historyStats = useMemo(() => {
-    if (!filterCustomerId) return null;
-    const customerJobs = jobs.filter(j => j.customerId === filterCustomerId);
-    if (customerJobs.length === 0) return null;
-
+    if (!filterCustomerId || filteredJobs.length === 0) return null;
+    
+    // Safe Sort: Handles both string and numeric date types
+    const customerJobs = [...filteredJobs].sort((a, b) => new Date(a.dateIn).getTime() - new Date(b.dateIn).getTime());
     const totalSpend = customerJobs.reduce((sum, j) => sum + (j.charges || 0), 0);
-    const firstVisit = Math.min(...customerJobs.map(j => j.dateIn));
-    const uniqueVehicles = new Set(customerJobs.map(j => j.vehicleId)).size;
+    const uniqueVehicles = new Set(customerJobs.map(j => j.vehicleNumber)).size;
 
     return {
       count: customerJobs.length,
       totalSpend,
-      firstVisit,
+      firstVisit: customerJobs[0].dateIn,
       uniqueVehicles,
-      customer: customers.find(c => c.id === filterCustomerId)
-    };
-  }, [filterCustomerId, jobs, customers]);
-
-  const updateStatus = (jobId: string, newStatus: JobStatus) => {
-    const updated = db.updateJobStatus(jobId, newStatus);
-    if (updated) {
-      setJobs(db.getJobs());
-      if (newStatus === JobStatus.COMPLETED) {
-        handleWhatsApp(updated);
+      customer: {
+        name: customerJobs[0].customerName,
+        mobile: customerJobs[0].customerMobile,
+        address: customerJobs[0].customerAddress
       }
+    };
+  }, [filterCustomerId, filteredJobs]);
+
+  const updateStatus = async (jobId: string, newStatus: JobStatus) => {
+    try {
+      const updated = await db.updateJobStatus(jobId, newStatus);
+      if (updated) {
+        setJobs(db.getJobs());
+        if (newStatus === JobStatus.COMPLETED) {
+          handleWhatsApp(updated);
+        }
+      }
+    } catch (error: any) {
+      alert(`Status update failed: ${error.message}`);
     }
   };
 
   const handleWhatsApp = (job: Job) => {
-    const customer = customers.find(c => c.id === job.customerId);
-    const vehicle = vehicles.find(v => v.id === job.vehicleId);
-    if (!customer) return;
-    const cleanPhone = customer.mobile.replace(/\D/g, '');
+    const cleanPhone = job.customerMobile.replace(/\D/g, '');
     const phoneWithCode = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
-    const message = `Hello ${customer.name}, your vehicle (${vehicle?.vehicleNumber || 'car'}) work has been completed at AutoCare. Please visit our shop to collect it. Thank you!`;
+    const message = `Hello ${job.customerName}, your vehicle (${job.vehicleNumber}) work has been completed at New Car Park. Please visit our shop to collect it. Thank you!`;
     const whatsappUrl = `https://wa.me/${phoneWithCode}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
 
+  const getVisitNumber = (jobId: string) => {
+    if (!filterCustomerId) return null;
+    // Safe Sort: Handles both string and numeric date types
+    const customerJobs = [...filteredJobs].sort((a, b) => new Date(a.dateIn).getTime() - new Date(b.dateIn).getTime());
+    const index = customerJobs.findIndex(j => j.id === jobId);
+    return index !== -1 ? index + 1 : null;
+  };
+
   return (
     <div className="space-y-6">
-      {/* Customer Profile Header */}
       {filterCustomerId && historyStats && (
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500">
-          <div className="bg-blue-600 p-6 text-white">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-white/20 rounded-2xl backdrop-blur-md flex items-center justify-center border border-white/30 shadow-inner">
-                  <History size={32} className="text-white" />
+        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-blue-500/5 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="bg-gradient-to-r from-blue-700 to-indigo-800 p-8 text-white relative">
+             <div className="absolute top-[-20%] right-[-5%] opacity-10 pointer-events-none">
+              <HistoryIcon size={200} />
+            </div>
+            
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex items-center gap-6">
+                <div className="w-20 h-20 bg-white/20 rounded-[1.75rem] backdrop-blur-xl flex items-center justify-center border border-white/30 shadow-2xl">
+                  <span className="text-3xl font-black">{historyStats.customer.name.charAt(0)}</span>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-blue-100/80 mb-0.5">Service Profile</p>
-                  <h3 className="text-2xl font-bold">{historyStats.customer?.name}</h3>
-                  <p className="text-sm text-blue-50/80">{historyStats.customer?.mobile}</p>
+                  <div className="inline-flex items-center gap-2 bg-blue-400/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/20 mb-2">
+                    <Tag size={12} /> Service History
+                  </div>
+                  <h3 className="text-3xl font-black tracking-tight">{historyStats.customer.name}</h3>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-blue-100/70 font-bold text-sm">
+                    <span className="flex items-center gap-1.5"><MessageSquare size={14} /> {historyStats.customer.mobile}</span>
+                    {historyStats.customer.address && <span className="flex items-center gap-1.5"><MapPin size={14} /> {historyStats.customer.address}</span>}
+                  </div>
                 </div>
               </div>
               <button 
                 onClick={onClearFilter}
-                className="px-5 py-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 border border-white/20 backdrop-blur-sm"
+                className="self-start md:self-center px-6 py-3 bg-white/10 hover:bg-white/20 rounded-2xl text-xs font-black uppercase tracking-widest transition flex items-center justify-center gap-2 border border-white/20 backdrop-blur-md active:scale-95"
               >
-                <XCircle size={18} /> Show All Jobs
+                <XCircle size={18} /> Close History
               </button>
             </div>
           </div>
           
-          <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-gray-100 border-t border-gray-100 bg-slate-50/30">
-            <div className="p-5 text-center">
+          <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-gray-100 border-t border-gray-100 bg-white">
+            <div className="p-6 text-center">
               <div className="flex items-center justify-center gap-2 text-blue-600 mb-1">
                 <TrendingUp size={16} />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Visits</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Total Visits</span>
               </div>
-              <p className="text-xl font-bold text-gray-800">{historyStats.count}</p>
+              <p className="text-3xl font-black text-gray-800">{historyStats.count}</p>
             </div>
-            <div className="p-5 text-center">
+            <div className="p-6 text-center">
               <div className="flex items-center justify-center gap-2 text-emerald-600 mb-1">
                 <DollarSign size={16} />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Total Spend</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Total Spend</span>
               </div>
-              <p className="text-xl font-bold text-gray-800">${historyStats.totalSpend.toLocaleString()}</p>
+              <p className="text-3xl font-black text-gray-800">${historyStats.totalSpend.toLocaleString()}</p>
             </div>
-            <div className="p-5 text-center">
+            <div className="p-6 text-center">
               <div className="flex items-center justify-center gap-2 text-amber-600 mb-1">
                 <Calendar size={16} />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">First Visit</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">First Visit</span>
               </div>
-              <p className="text-sm font-bold text-gray-800">{new Date(historyStats.firstVisit).toLocaleDateString()}</p>
+              <p className="text-sm font-black text-gray-800">{new Date(historyStats.firstVisit).toLocaleDateString()}</p>
             </div>
-            <div className="p-5 text-center">
+            <div className="p-6 text-center">
               <div className="flex items-center justify-center gap-2 text-indigo-600 mb-1">
                 <Car size={16} />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Vehicles</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Vehicles</span>
               </div>
-              <p className="text-sm font-bold text-gray-800">{historyStats.uniqueVehicles}</p>
+              <p className="text-sm font-black text-gray-800">{historyStats.uniqueVehicles} Known</p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-        {['All', ...Object.values(JobStatus)].map(status => (
-          <button
-            key={status}
-            onClick={() => setActiveFilter(status as any)}
-            className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
-              activeFilter === status ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-500 border border-gray-200'
-            }`}
-          >
-            {status}
-          </button>
-        ))}
-      </div>
+      {!filterCustomerId && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          {['All', ...Object.values(JobStatus)].map(status => (
+            <button
+              key={status}
+              onClick={() => setActiveFilter(status as any)}
+              className={`px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${
+                activeFilter === status ? 'bg-blue-600 text-white shadow-xl shadow-blue-200' : 'bg-white text-gray-500 border border-gray-100'
+              }`}
+            >
+              {status}
+            </button>
+          ))}
+        </div>
+      )}
 
-      {/* Jobs Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className={`grid grid-cols-1 ${filterCustomerId ? 'gap-6' : 'md:grid-cols-2 lg:grid-cols-3 gap-4'}`}>
         {filteredJobs.length > 0 ? (
-          filteredJobs.map(job => (
-            <JobCard 
-              key={job.id} 
-              job={job} 
-              customer={customers.find(c => c.id === job.customerId)!}
-              vehicle={vehicles.find(v => v.id === job.vehicleId)!}
-              onStatusUpdate={updateStatus}
-              onNotify={handleWhatsApp}
-              onEdit={() => onEditJob(job.id)}
-            />
+          filteredJobs.map((job) => (
+            <div key={job.id} className={filterCustomerId ? "relative pl-8 md:pl-12" : ""}>
+              {filterCustomerId && (
+                <>
+                  <div className="absolute left-4 md:left-6 top-0 bottom-0 w-1 bg-gray-100 rounded-full" />
+                  <div className={`absolute left-2 md:left-4 top-10 w-5 h-5 rounded-full border-4 border-white shadow-md z-10 ${
+                    job.status === JobStatus.DELIVERED ? 'bg-slate-400' : 'bg-blue-500'
+                  }`} />
+                </>
+              )}
+              <JobCard 
+                job={job} 
+                onStatusUpdate={updateStatus}
+                onNotify={handleWhatsApp}
+                onEdit={() => onEditJob(job.id)}
+                visitNumber={getVisitNumber(job.id)}
+                isHistoryView={!!filterCustomerId}
+              />
+            </div>
           ))
         ) : (
-          <div className="col-span-full py-20 text-center bg-white rounded-3xl border border-dashed border-gray-200">
-            <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
-              <Car size={32} />
+          <div className="col-span-full py-24 text-center bg-white rounded-[2.5rem] border border-dashed border-gray-200">
+            <div className="bg-gray-100 w-20 h-20 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 text-gray-300">
+              <Car size={40} />
             </div>
-            <h3 className="text-gray-600 font-bold">No jobs found</h3>
+            <h3 className="text-gray-400 font-black text-xl">No service records found</h3>
           </div>
         )}
       </div>
@@ -203,12 +233,12 @@ const JobList: React.FC<JobListProps> = ({ searchTerm, onEditJob, filterCustomer
 
 const JobCard: React.FC<{ 
   job: Job; 
-  customer: Customer; 
-  vehicle: Vehicle; 
   onStatusUpdate: (id: string, s: JobStatus) => void;
   onNotify: (job: Job) => void;
   onEdit: () => void;
-}> = ({ job, customer, vehicle, onStatusUpdate, onNotify, onEdit }) => {
+  visitNumber?: number | null;
+  isHistoryView?: boolean;
+}> = ({ job, onStatusUpdate, onNotify, onEdit, visitNumber, isHistoryView }) => {
   const statusColors = {
     [JobStatus.RECEIVED]: 'bg-blue-50 text-blue-600 border-blue-100',
     [JobStatus.IN_PROGRESS]: 'bg-amber-50 text-amber-600 border-amber-100',
@@ -217,53 +247,77 @@ const JobCard: React.FC<{
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition overflow-hidden group">
-      <div className="p-4 flex flex-col h-full">
-        <div className="flex items-start justify-between mb-3">
-          <div>
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase border ${statusColors[job.status]}`}>
-              {job.status}
-            </span>
-            <h4 className="mt-2 text-lg font-bold text-gray-800">{vehicle?.vehicleNumber || 'Unknown'}</h4>
-            <p className="text-xs text-gray-500 font-medium">{customer?.name} • {customer?.mobile}</p>
+    <div className={`bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group ${isHistoryView ? 'max-w-3xl border-l-4 border-l-blue-500' : ''}`}>
+      <div className="p-6 flex flex-col h-full">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border ${statusColors[job.status]}`}>
+                {job.status}
+              </span>
+              {visitNumber && (
+                <span className="bg-slate-900 text-white px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest">
+                  Visit #{visitNumber}
+                </span>
+              )}
+            </div>
+            <h4 className="mt-3 text-xl font-black text-gray-800 tracking-tight leading-none">{job.vehicleNumber}</h4>
+            <p className="text-xs text-gray-500 font-bold mt-1 uppercase tracking-wider">
+              {job.brand} {job.model} • <span className="text-blue-600">{job.customerName}</span>
+            </p>
           </div>
-          <button onClick={onEdit} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition">
-            <Pencil size={18} />
-          </button>
+          <div className="flex gap-1">
+            <button onClick={onEdit} className="p-3 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-2xl transition-colors">
+              <Pencil size={20} />
+            </button>
+          </div>
         </div>
 
-        <div className="flex-1 space-y-3">
-          <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-            <p className="text-xs text-gray-400 font-bold uppercase mb-1">Services</p>
-            <p className="text-sm text-gray-700 font-medium line-clamp-2">{job.services}</p>
+        <div className="flex-1 space-y-4">
+          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 group-hover:bg-white group-hover:border-blue-100 transition-colors">
+            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5">Job Services</p>
+            <p className="text-sm text-slate-700 font-medium leading-relaxed">{job.services}</p>
           </div>
-          <div className="flex justify-between items-center text-[11px] text-gray-500 font-bold uppercase tracking-wider">
-            <span>In: {new Date(job.dateIn).toLocaleDateString()}</span>
-            <span className="text-gray-900 bg-gray-100 px-2 py-0.5 rounded border border-gray-200">${job.charges?.toLocaleString() || '0.00'}</span>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-gray-50/50 p-3 rounded-xl border border-gray-100">
+               <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest mb-0.5">Check-in Date</p>
+               <p className="text-xs font-bold text-gray-700">{new Date(job.dateIn).toLocaleDateString()}</p>
+            </div>
+            <div className="bg-emerald-50/30 p-3 rounded-xl border border-emerald-100">
+               <p className="text-[9px] text-emerald-600 font-black uppercase tracking-widest mb-0.5">Bill Amount</p>
+               <p className="text-xs font-black text-emerald-700">${job.charges?.toLocaleString() || '0.00'}</p>
+            </div>
           </div>
         </div>
 
-        <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between gap-2">
+        <div className="mt-6 pt-5 border-t border-gray-100 flex items-center justify-between gap-3">
           {job.status !== JobStatus.DELIVERED ? (
-            <select 
-              value={job.status}
-              onChange={(e) => onStatusUpdate(job.id, e.target.value as JobStatus)}
-              className="flex-1 bg-gray-100 border-none rounded-xl px-3 py-2.5 text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 transition cursor-pointer"
-            >
-              <option value={JobStatus.RECEIVED}>Mark Received</option>
-              <option value={JobStatus.IN_PROGRESS}>Mark In Progress</option>
-              <option value={JobStatus.COMPLETED}>Mark Completed</option>
-              <option value={JobStatus.DELIVERED}>Mark Delivered</option>
-            </select>
+            <div className="flex-1 relative group/select">
+              <select 
+                value={job.status}
+                onChange={(e) => onStatusUpdate(job.id, e.target.value as JobStatus)}
+                className="w-full bg-slate-100 border-none rounded-2xl px-5 py-3 text-xs font-black text-slate-700 outline-none focus:ring-4 focus:ring-blue-100 transition cursor-pointer appearance-none uppercase tracking-widest"
+              >
+                <option value={JobStatus.RECEIVED}>Received</option>
+                <option value={JobStatus.IN_PROGRESS}>Work Started</option>
+                <option value={JobStatus.COMPLETED}>Ready / Completed</option>
+                <option value={JobStatus.DELIVERED}>Delivered to Owner</option>
+              </select>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                <ChevronRight size={16} className="rotate-90" />
+              </div>
+            </div>
           ) : (
-            <div className="flex-1 py-2 text-center text-xs font-bold text-gray-400 bg-gray-50 rounded-xl">Delivered</div>
+            <div className="flex-1 py-3 text-center text-[10px] font-black text-slate-400 bg-slate-50 rounded-2xl uppercase tracking-widest border border-slate-100">Successfully Delivered</div>
           )}
+          
           <button 
             onClick={() => onNotify(job)} 
-            className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-100 transition shadow-sm active:scale-95"
-            title="Notify via WhatsApp"
+            className="p-4 bg-emerald-600 text-white rounded-2xl hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 active:scale-90"
+            title="Send WhatsApp Update"
           >
-            <MessageSquare size={20} />
+            <MessageSquare size={20} fill="currentColor" />
           </button>
         </div>
       </div>

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   Wrench, 
@@ -7,9 +8,11 @@ import {
   Search, 
   LogOut,
   Car,
-  Megaphone
+  Megaphone,
+  Loader2
 } from 'lucide-react';
-import { AppView, Job, Customer, Vehicle, JobStatus } from './types';
+// Fixed: Removed non-existent 'Vehicle' import
+import { AppView, Job, Customer, JobStatus } from './types';
 import { db } from './db';
 import Dashboard from './components/Dashboard';
 import JobList from './components/JobList';
@@ -20,9 +23,17 @@ import MarketingView from './components/MarketingView';
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>('dashboard');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isDbReady, setIsDbReady] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
   const [filterCustomerId, setFilterCustomerId] = useState<string | null>(null);
+
+  // Initialize DB connection
+  useEffect(() => {
+    db.init().then(() => {
+      setIsDbReady(true);
+    });
+  }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +67,20 @@ const App: React.FC = () => {
     setFilterCustomerId(null);
   };
 
+  if (!isDbReady) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
+        <div className="bg-blue-600 p-4 rounded-3xl shadow-xl shadow-blue-200 animate-bounce">
+          <Wrench className="text-white w-10 h-10" />
+        </div>
+        <div className="flex items-center gap-2 text-slate-400 font-black uppercase tracking-widest text-xs">
+          <Loader2 className="animate-spin" size={16} />
+          Connecting to Cloud Database...
+        </div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-600 to-indigo-800">
@@ -64,7 +89,7 @@ const App: React.FC = () => {
             <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
               <Wrench className="text-blue-600 w-8 h-8" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-800">AutoCare Manager</h1>
+            <h1 className="text-2xl font-bold text-gray-800">New Car Park Manager</h1>
             <p className="text-gray-500">Sign in to manage your shop</p>
           </div>
           <form onSubmit={handleLogin} className="space-y-4">
@@ -90,7 +115,7 @@ const App: React.FC = () => {
       <aside className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-gray-200 z-50">
         <div className="p-6 flex items-center gap-3 border-b border-gray-100">
           <div className="bg-blue-600 p-2 rounded-lg"><Wrench className="text-white w-6 h-6" /></div>
-          <span className="font-bold text-xl text-gray-800">AutoCare</span>
+          <span className="font-bold text-xl text-gray-800">New Car Park</span>
         </div>
         <nav className="flex-1 p-4 space-y-2">
           <NavButton active={currentView === 'dashboard'} onClick={() => { setCurrentView('dashboard'); setFilterCustomerId(null); }} icon={<LayoutDashboard />} label="Dashboard" />
@@ -108,7 +133,7 @@ const App: React.FC = () => {
 
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200 px-4 py-3 lg:px-8 flex items-center justify-between">
         <div className="lg:hidden flex items-center gap-2">
-          <Wrench className="text-blue-600 w-6 h-6" /> <span className="font-bold text-lg">AutoCare</span>
+          <Wrench className="text-blue-600 w-6 h-6" /> <span className="font-bold text-lg">New Car Park</span>
         </div>
         <div className="hidden lg:block text-2xl font-black text-gray-800 capitalize tracking-tight">
           {editingJobId ? 'Modify Record' : currentView.replace('-', ' ')}

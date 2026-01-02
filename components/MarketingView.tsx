@@ -26,7 +26,7 @@ interface MarketingViewProps {
 
 const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [campaignMessage, setCampaignMessage] = useState('Wishing you a Joyous Festival Season! 🎊✨ To celebrate, AutoCare is offering a 15% discount on all car detailing and accessories this week. Visit us today! 🚗💨');
+  const [campaignMessage, setCampaignMessage] = useState('Wishing you a Joyous Festival Season! 🎊✨ To celebrate, New Car Park is offering a 15% discount on all car detailing and accessories this week. Visit us today! 🚗💨');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [exportFeedback, setExportFeedback] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState(false);
@@ -39,7 +39,6 @@ const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
 
   const allCustomers = useMemo(() => {
     const all = db.getCustomers();
-    // Ensure unique numbers for marketing to avoid double messaging
     const unique = new Map();
     all.forEach(c => {
       if (!unique.has(c.mobile)) {
@@ -63,14 +62,14 @@ const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
 
     let vcfContent = '';
     selectedList.forEach(c => {
-      vcfContent += `BEGIN:VCARD\nVERSION:3.0\nFN:AC: ${c.name}\nTEL;TYPE=CELL:${c.mobile}\nEND:VCARD\n`;
+      vcfContent += `BEGIN:VCARD\nVERSION:3.0\nFN:NCP: ${c.name}\nTEL;TYPE=CELL:${c.mobile}\nEND:VCARD\n`;
     });
 
     const blob = new Blob([vcfContent], { type: 'text/vcard' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', 'AutoCare_Contacts.vcf');
+    link.setAttribute('download', 'New_Car_Park_Contacts.vcf');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -157,50 +156,16 @@ const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
             <p className="text-xs text-gray-400 font-bold uppercase tracking-[0.2em]">WhatsApp Blast & CRM Tools</p>
           </div>
         </div>
-      </div>
-
-      {/* Hero Card */}
-      <div className="bg-gradient-to-br from-indigo-950 via-indigo-900 to-blue-900 rounded-[2.5rem] p-8 md:p-12 text-white shadow-2xl relative overflow-hidden border border-white/5">
-        <div className="absolute top-[-10%] right-[-5%] opacity-10 rotate-12 pointer-events-none">
-          <MessageCircle size={300} />
-        </div>
-        
-        <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-10">
-          <div className="space-y-4 flex-1">
-            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/30 shadow-lg">
-              <Sparkles size={14} className="text-yellow-300" /> Professional Reach
-            </div>
-            <h2 className="text-5xl font-black tracking-tighter leading-none">Festival <br/>Campaigns</h2>
-            <p className="text-indigo-100/80 text-sm font-medium max-w-md leading-relaxed">
-              Send targeted season greetings or offers. Use <b>Direct Blast</b> for high-speed manual sending that works on every browser.
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
-            <button 
-              onClick={startBlast} 
-              disabled={selectedIds.size === 0 || isBlasting} 
-              className="group flex-1 lg:flex-none flex items-center justify-center gap-3 bg-yellow-400 hover:bg-yellow-300 text-indigo-950 px-10 py-5 rounded-[1.5rem] font-black transition active:scale-95 disabled:opacity-50 shadow-xl shadow-yellow-500/20"
-            >
-              <Zap size={24} fill="currentColor" />
-              <div className="text-left">
-                <p className="text-[10px] uppercase opacity-70 leading-none mb-1 font-bold">Initiate</p>
-                <p className="text-base font-black">Direct Blast</p>
-              </div>
-            </button>
-            <button 
-              onClick={handleVcfExport} 
-              disabled={selectedIds.size === 0 || isBlasting} 
-              className="flex-1 lg:flex-none flex items-center justify-center gap-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 px-8 py-5 rounded-[1.5rem] font-bold transition active:scale-95 disabled:opacity-50"
-            >
-              {exportFeedback ? <CheckCircle2 size={24} className="text-green-300" /> : <Download size={24} />}
-              <div className="text-left">
-                <p className="text-[10px] uppercase opacity-70 leading-none mb-1">Backup</p>
-                <p className="text-base">Export VCF</p>
-              </div>
-            </button>
-          </div>
-        </div>
+        <button 
+          onClick={handleVcfExport} 
+          disabled={selectedIds.size === 0 || isBlasting} 
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs uppercase transition-all active:scale-95 disabled:opacity-30 ${
+            exportFeedback ? 'bg-emerald-500 text-white' : 'bg-slate-800 text-white hover:bg-slate-700'
+          }`}
+        >
+          {exportFeedback ? <CheckCircle2 size={16} /> : <Download size={16} />}
+          <span className="hidden sm:inline">Export VCF</span>
+        </button>
       </div>
 
       {/* Blast Overlay/Modal */}
@@ -213,10 +178,10 @@ const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
               </button>
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-3xl font-black">
-                  {blastingListRef.current[blastIndex].name.charAt(0)}
+                  {(blastingListRef.current[blastIndex].name || 'C').charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="text-2xl font-black">{blastingListRef.current[blastIndex].name}</h3>
+                  <h3 className="text-2xl font-black">{blastingListRef.current[blastIndex].name || 'Customer'}</h3>
                   <p className="text-indigo-100 font-medium">{blastingListRef.current[blastIndex].mobile}</p>
                 </div>
               </div>
@@ -230,12 +195,12 @@ const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
                 </div>
               </div>
             </div>
-            <div className="p-8 space-y-6">
+            <div className="p-8 space-y-5 max-h-[60vh] overflow-y-auto custom-scrollbar">
               <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Message Preview</p>
                 <p className="text-sm text-slate-700 font-medium leading-relaxed">{campaignMessage}</p>
               </div>
-              <div className="flex gap-4">
+              <div className="flex gap-4 sticky bottom-0 bg-white pt-2">
                 <button 
                   onClick={skipCurrent}
                   className="flex-1 py-4 px-6 border-2 border-slate-100 text-slate-500 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-50 transition"
@@ -249,7 +214,9 @@ const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
                   <MessageCircle size={22} fill="currentColor" /> Send Message
                 </button>
               </div>
-              <p className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">Opens a new WhatsApp tab for each send</p>
+              <p className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                Opens a new WhatsApp tab for each send
+              </p>
             </div>
           </div>
         </div>
@@ -262,12 +229,15 @@ const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
               <Megaphone size={22} strokeWidth={3} />
               <h3 className="font-black text-lg uppercase tracking-tight">Campaign Template</h3>
             </div>
-            <textarea 
-              rows={8} 
-              className="w-full bg-slate-50 border-2 border-slate-100 rounded-[1.5rem] p-5 text-sm text-gray-700 focus:ring-4 focus:ring-indigo-50 focus:border-indigo-100 outline-none transition resize-none leading-relaxed font-medium" 
-              value={campaignMessage} 
-              onChange={e => setCampaignMessage(e.target.value)} 
-            />
+            
+            <div className="space-y-4">
+              <textarea 
+                rows={8} 
+                className="w-full bg-slate-50 border-2 border-slate-100 rounded-[1.5rem] p-5 text-sm text-gray-700 focus:ring-4 focus:ring-indigo-50 focus:border-indigo-100 outline-none transition resize-none leading-relaxed font-medium" 
+                value={campaignMessage} 
+                onChange={e => setCampaignMessage(e.target.value)} 
+              />
+            </div>
           </div>
 
           <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-indigo-500/5">
@@ -353,13 +323,13 @@ const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
               onClick={copySelectedNumbers} 
               className="p-3 md:p-4 bg-white/10 hover:bg-white/20 text-white rounded-xl md:rounded-2xl transition active:scale-95" 
             >
-              {copyFeedback ? <CheckCircle2 size={20} className="text-emerald-400 md:size-24" /> : <ClipboardList size={20} className="md:size-24" />}
+              {copyFeedback ? <CheckCircle2 size={24} className="text-emerald-400" /> : <ClipboardList size={24} />}
             </button>
             <button 
               onClick={startBlast} 
               className="flex items-center gap-2 md:gap-3 bg-yellow-400 hover:bg-yellow-300 text-indigo-950 px-5 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl font-black text-xs md:text-sm uppercase tracking-wider transition shadow-2xl shadow-yellow-500/30 active:scale-95"
             >
-              <Zap size={16} fill="currentColor" className="md:size-20" /> 
+              <Zap size={20} fill="currentColor" /> 
               <span>Blast Now</span>
             </button>
           </div>

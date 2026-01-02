@@ -1,9 +1,13 @@
-import { Customer, Vehicle, Job, JobStatus } from './types';
+import { createClient } from '@supabase/supabase-js';
+import { Job, JobStatus, Customer } from './types';
+
+const SUPABASE_URL = 'https://vfrpzuceyhcfmaoabxkt.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_MPjy2-QUABnpjHJw-sePUA_ujv6-Bs2';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const STORAGE_KEYS = {
-  CUSTOMERS: 'autocare_customers',
-  VEHICLES: 'autocare_vehicles',
-  JOBS: 'autocare_jobs',
+  JOBS: 'autocare_flat_jobs',
   CONFIG: 'autocare_config'
 };
 
@@ -11,56 +15,113 @@ export interface ShopConfig {
   groupInviteLink: string;
 }
 
+let _jobs: Job[] = [];
+let _config: ShopConfig = { groupInviteLink: '' };
+
 export const db = {
-  getCustomers: (): Customer[] => JSON.parse(localStorage.getItem(STORAGE_KEYS.CUSTOMERS) || '[]'),
-  saveCustomer: (customer: Customer) => {
-    const list = db.getCustomers();
-    const existingIndex = list.findIndex(c => c.id === customer.id);
-    if (existingIndex > -1) list[existingIndex] = customer;
-    else list.push(customer);
-    localStorage.setItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify(list));
+  init: async () => {
+    try {
+      const [
+        { data: jobs, error: jobsError },
+        { data: configs, error: configError }
+      ] = await Promise.all([
+        supabase.from('customers').select('*'),
+        supabase.from('config').select('*').eq('id', 'main').single()
+      ]);
+
+      if (jobsError) throw jobsError;
+      
+      _jobs = jobs || [];
+      if (configs) {
+        _config = configs as unknown as ShopConfig;
+      }
+      console.log('Database synchronized with Supabase successfully');
+    } catch (error: any) {
+      console.error('Initial database sync failed:', error.message || error);
+      _jobs = JSON.parse(localStorage.getItem(STORAGE_KEYS.JOBS) || '[]');
+      _config = JSON.parse(localStorage.getItem(STORAGE_KEYS.CONFIG) || '{"groupInviteLink":""}');
+    }
   },
 
-  getVehicles: (): Vehicle[] => JSON.parse(localStorage.getItem(STORAGE_KEYS.VEHICLES) || '[]'),
-  saveVehicle: (vehicle: Vehicle) => {
-    const list = db.getVehicles();
-    const existingIndex = list.findIndex(v => v.id === vehicle.id);
-    if (existingIndex > -1) list[existingIndex] = vehicle;
-    else list.push(vehicle);
-    localStorage.setItem(STORAGE_KEYS.VEHICLES, JSON.stringify(list));
-  },
+  getJobs: (): Job[] => _jobs,
 
-  getJobs: (): Job[] => JSON.parse(localStorage.getItem(STORAGE_KEYS.JOBS) || '[]'),
-  saveJob: (job: Job) => {
-    const list = db.getJobs();
-    const existingIndex = list.findIndex(j => j.id === job.id);
-    if (existingIndex > -1) list[existingIndex] = job;
+  saveJob: async (job: Job) => {
+    const list = [..._jobs];
+    const index = list.findIndex(j => j.id === job.id);
+    if (index > -1) list[index] = job;
     else list.push(job);
+    _jobs = list;
+
+    // Cache locally
     localStorage.setItem(STORAGE_KEYS.JOBS, JSON.stringify(list));
+
+    // Persist to Supabase
+    const { error } = await supabase.from('customers').upsert({
+      id: job.id,
+      customerName: job.customerName,
+      customerMobile: job.customerMobile,
+      customerAddress: job.customerAddress,
+      vehicleNumber: job.vehicleNumber,
+      brand: job.brand,
+      model: job.model,
+      type: job.type,
+      color: job.color,
+      services: job.services,
+      dateIn: job.dateIn,
+      expectedDeliveryDate: job.expectedDeliveryDate,
+      charges: job.charges,
+      status: job.status
+    });
+
+    if (error) {
+      console.error('Supabase Error Detail:', error);
+      throw new Error(error.message || 'Unknown Supabase Error');
+    }
   },
 
-  updateJobStatus: (jobId: string, status: JobStatus) => {
-    const list = db.getJobs();
+  getCustomers: (): Customer[] => {
+    const map = new Map<string, Customer>();
+    // Sort resiliently: Handle both string dates and numeric timestamps
+    const sorted = [..._jobs].sort((a, b) => {
+      const dateA = new Date(a.dateIn).getTime();
+      const dateB = new Date(b.dateIn).getTime();
+      return dateB - dateA;
+    });
+    
+    sorted.forEach(job => {
+      const mobile = job.customerMobile;
+      if (!map.has(mobile)) {
+        map.set(mobile, {
+          id: job.id,
+          name: job.customerName,
+          mobile: mobile,
+          address: job.customerAddress,
+          createdAt: String(job.dateIn)
+        });
+      }
+    });
+    return Array.from(map.values());
+  },
+
+  updateJobStatus: async (jobId: string, status: JobStatus) => {
+    const list = [..._jobs];
     const job = list.find(j => j.id === jobId);
     if (job) {
       job.status = status;
+      _jobs = list;
       localStorage.setItem(STORAGE_KEYS.JOBS, JSON.stringify(list));
+      const { error } = await supabase.from('customers').update({ status }).eq('id', jobId);
+      if (error) throw new Error(error.message || 'Failed to update status in cloud');
       return job;
     }
     return null;
   },
 
-  getConfig: (): ShopConfig => {
-    const defaultVal = { groupInviteLink: '' };
-    try {
-      const stored = localStorage.getItem(STORAGE_KEYS.CONFIG);
-      return stored ? JSON.parse(stored) : defaultVal;
-    } catch {
-      return defaultVal;
-    }
-  },
-
-  saveConfig: (config: ShopConfig) => {
+  getConfig: (): ShopConfig => _config,
+  saveConfig: async (config: ShopConfig) => {
+    _config = config;
     localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(config));
+    const { error } = await supabase.from('config').upsert({ id: 'main', ...config });
+    if (error) throw new Error(error.message || 'Failed to save config');
   }
 };

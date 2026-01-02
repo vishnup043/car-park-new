@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   User, 
@@ -9,10 +8,11 @@ import {
   ChevronLeft,
   Users,
   MessageCircle,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from 'lucide-react';
 import { db } from '../db';
-import { JobStatus, Customer, Vehicle, Job } from '../types';
+import { JobStatus, Job } from '../types';
 
 interface AddJobFormProps {
   jobId?: string | null;
@@ -22,6 +22,7 @@ interface AddJobFormProps {
 const AddJobForm: React.FC<AddJobFormProps> = ({ jobId, onSuccess }) => {
   const [step, setStep] = useState(1);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [inviteToGroup, setInviteToGroup] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
@@ -43,72 +44,68 @@ const AddJobForm: React.FC<AddJobFormProps> = ({ jobId, onSuccess }) => {
     if (jobId) {
       const job = db.getJobs().find(j => j.id === jobId);
       if (job) {
-        const customer = db.getCustomers().find(c => c.id === job.customerId);
-        const vehicle = db.getVehicles().find(v => v.id === job.vehicleId);
-        
-        if (customer && vehicle) {
-          setFormData({
-            name: customer.name,
-            mobile: customer.mobile,
-            address: customer.address || '',
-            vehicleNumber: vehicle.vehicleNumber,
-            brand: vehicle.brand,
-            model: vehicle.model,
-            type: vehicle.type,
-            color: vehicle.color || '',
-            services: job.services,
-            deliveryDate: new Date(job.expectedDeliveryDate).toISOString().split('T')[0],
-            charges: job.charges?.toString() || ''
-          });
-        }
+        setFormData({
+          name: job.customerName,
+          mobile: job.customerMobile,
+          address: job.customerAddress || '',
+          vehicleNumber: job.vehicleNumber,
+          brand: job.brand,
+          model: job.model,
+          type: job.type,
+          color: job.color || '',
+          services: job.services,
+          // Use the stored string directly (it's YYYY-MM-DD now)
+          deliveryDate: job.expectedDeliveryDate,
+          charges: job.charges?.toString() || ''
+        });
       }
+    } else {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      setFormData(prev => ({...prev, deliveryDate: tomorrow.toISOString().split('T')[0]}));
     }
   }, [jobId]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     
-    let existingJob = jobId ? db.getJobs().find(j => j.id === jobId) : null;
-    const cId = existingJob ? existingJob.customerId : Math.random().toString(36).substr(2, 9);
-    const vId = existingJob ? existingJob.vehicleId : Math.random().toString(36).substr(2, 9);
-    const jId = jobId || Math.random().toString(36).substr(2, 9);
+    try {
+      const existingJob = jobId ? db.getJobs().find(j => j.id === jobId) : null;
+      const jId = jobId || Math.random().toString(36).substr(2, 9);
 
-    const customer: Customer = {
-      id: cId,
-      name: formData.name,
-      mobile: formData.mobile,
-      address: formData.address,
-      createdAt: existingJob ? (db.getCustomers().find(c => c.id === cId)?.createdAt || Date.now()) : Date.now()
-    };
-    db.saveCustomer(customer);
+      // Now storing pure ISO strings for database visibility
+      const job: Job = {
+        id: jId,
+        customerName: formData.name,
+        customerMobile: formData.mobile,
+        customerAddress: formData.address,
+        vehicleNumber: formData.vehicleNumber.toUpperCase(),
+        brand: formData.brand,
+        model: formData.model,
+        type: formData.type,
+        color: formData.color,
+        services: formData.services,
+        dateIn: existingJob ? existingJob.dateIn : todayStr,
+        expectedDeliveryDate: formData.deliveryDate || todayStr,
+        charges: parseFloat(formData.charges) || 0,
+        status: existingJob ? existingJob.status : JobStatus.RECEIVED
+      };
 
-    const vehicle: Vehicle = {
-      id: vId,
-      customerId: cId,
-      vehicleNumber: formData.vehicleNumber.toUpperCase(),
-      brand: formData.brand,
-      model: formData.model,
-      type: formData.type,
-      color: formData.color
-    };
-    db.saveVehicle(vehicle);
+      await db.saveJob(job);
 
-    const job: Job = {
-      id: jId,
-      customerId: cId,
-      vehicleId: vId,
-      services: formData.services,
-      dateIn: existingJob ? existingJob.dateIn : Date.now(),
-      expectedDeliveryDate: new Date(formData.deliveryDate).getTime() || Date.now() + 86400000,
-      charges: parseFloat(formData.charges) || 0,
-      status: existingJob ? existingJob.status : JobStatus.RECEIVED
-    };
-    db.saveJob(job);
-
-    if (!jobId) {
-      setIsSuccess(true);
-    } else {
-      onSuccess();
+      if (!jobId) {
+        setIsSuccess(true);
+      } else {
+        onSuccess();
+      }
+    } catch (error: any) {
+      console.error("Submission failed:", error);
+      // Improved error message extraction
+      const msg = error.message || (typeof error === 'string' ? error : 'Check your Supabase column types (change to TEXT or DATE)');
+      alert(`Submission Error: ${msg}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -116,7 +113,7 @@ const AddJobForm: React.FC<AddJobFormProps> = ({ jobId, onSuccess }) => {
     const config = db.getConfig();
     const cleanPhone = formData.mobile.replace(/\D/g, '');
     const phoneWithCode = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
-    const message = `Welcome ${formData.name}! Thank you for choosing AutoCare. Please join our WhatsApp updates group for the latest offers: ${config.groupInviteLink}`;
+    const message = `Welcome ${formData.name}! Thank you for choosing New Car Park. Please join our WhatsApp updates group for the latest offers: ${config.groupInviteLink}`;
     const whatsappUrl = `https://wa.me/${phoneWithCode}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
     onSuccess();
@@ -175,7 +172,7 @@ const AddJobForm: React.FC<AddJobFormProps> = ({ jobId, onSuccess }) => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input label="Customer Name" required value={formData.name} onChange={v => setFormData({...formData, name: v})} />
-              <Input label="WhatsApp Phone" required type="tel" placeholder="Include country code" value={formData.mobile} onChange={v => setFormData({...formData, mobile: v})} />
+              <Input label="WhatsApp Phone" required type="tel" placeholder="e.g. 9876543210" value={formData.mobile} onChange={v => setFormData({...formData, mobile: v})} />
               <div className="md:col-span-2">
                 <Input label="Residential Locality" value={formData.address} onChange={v => setFormData({...formData, address: v})} />
               </div>
@@ -242,8 +239,17 @@ const AddJobForm: React.FC<AddJobFormProps> = ({ jobId, onSuccess }) => {
                 </div>
               )}
             </div>
-            <button type="submit" className="w-full mt-6 flex items-center justify-center gap-2 bg-emerald-600 text-white font-black py-4 rounded-2xl hover:bg-emerald-700 transition active:scale-95 shadow-xl shadow-emerald-100">
-              {jobId ? 'Save Changes' : 'Confirm Registration'} <CheckCircle size={20} />
+            <button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="w-full mt-6 flex items-center justify-center gap-2 bg-emerald-600 text-white font-black py-4 rounded-2xl hover:bg-emerald-700 transition active:scale-95 shadow-xl shadow-emerald-100 disabled:opacity-50"
+            >
+              {isSubmitting ? (
+                <><Loader2 className="animate-spin" size={20} /> Registering...</>
+              ) : (
+                jobId ? 'Save Changes' : 'Confirm Registration'
+              )}
+              {!isSubmitting && <CheckCircle size={20} />}
             </button>
           </div>
         )}
@@ -259,7 +265,7 @@ const StepCircle: React.FC<{ num: number; active: boolean; done: boolean }> = ({
 );
 
 const StepLine: React.FC<{ active: boolean }> = ({ active }) => (
-  <div className={`h-1 w-8 rounded-full transition-colors duration-500 ${active ? 'bg-white' : 'bg-blue-500'}`} />
+  <div className={`h-1 w-8 rounded-full transition-colors duration-500 ${active ? 'bg-white' : 'bg-blue-50'}`} />
 );
 
 const Input: React.FC<{ label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string; required?: boolean; min?: string; }> = ({ label, value, onChange, type = 'text', placeholder, required, min }) => (
