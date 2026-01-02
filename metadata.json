@@ -1,0 +1,7 @@
+{
+  "name": "AutoCare Shop Manager",
+  "description": "A comprehensive digital management tool for car accessory shops to track vehicle services, manage customer records, and automate WhatsApp status updates.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
