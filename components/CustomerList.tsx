@@ -73,7 +73,7 @@ const CustomerList: React.FC<CustomerListProps> = ({ searchTerm, onViewHistory }
                     <TrendingUp size={10} /> {stats.count} Visits
                   </span>
                   <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1.5">
-                    ${stats.spend.toLocaleString()} Total
+                    ₹{stats.spend.toLocaleString()} Total
                   </span>
                 </div>
                 <button 

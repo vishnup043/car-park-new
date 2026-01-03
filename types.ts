@@ -17,8 +17,8 @@ export interface Job {
   type: string;
   color?: string;
   services: string;
-  dateIn: string; // Stored as YYYY-MM-DD string
-  expectedDeliveryDate: string; // Stored as YYYY-MM-DD string
+  dateIn: string; // Changed to string for consistency and reliability
+  expectedDeliveryDate: string; // Changed to string to match SQL TEXT column
   charges?: number;
   status: JobStatus;
 }
@@ -29,7 +29,7 @@ export interface Customer {
   name: string;
   mobile: string;
   address?: string;
-  createdAt: string; // Stored as YYYY-MM-DD string
+  createdAt: string; // Changed to string
 }
 
 export type AppView = 'dashboard' | 'jobs' | 'customers' | 'add-job' | 'marketing' | 'reports';

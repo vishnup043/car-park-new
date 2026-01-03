@@ -27,6 +27,20 @@ interface JobListProps {
   onClearFilter?: () => void;
 }
 
+// Robust helper to safely format dates from timestamps or strings
+const formatDate = (dateInput: any) => {
+  if (!dateInput) return 'N/A';
+  
+  // Try parsing as number first (if it's a numeric string or number)
+  if (!isNaN(dateInput) && !String(dateInput).includes('-')) {
+    const d = new Date(Number(dateInput));
+    return isNaN(d.getTime()) ? 'Invalid Date' : d.toLocaleDateString();
+  }
+  
+  const date = new Date(dateInput);
+  return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString();
+};
+
 const JobList: React.FC<JobListProps> = ({ searchTerm, onEditJob, filterCustomerId, onClearFilter }) => {
   const [activeFilter, setActiveFilter] = useState<JobStatus | 'All'>('All');
   const [jobs, setJobs] = useState<Job[]>(db.getJobs());
@@ -34,7 +48,6 @@ const JobList: React.FC<JobListProps> = ({ searchTerm, onEditJob, filterCustomer
   const filteredJobs = useMemo(() => {
     let list = [...jobs];
     
-    // Filter by specific customer history if provided
     if (filterCustomerId) {
       const refJob = jobs.find(j => j.id === filterCustomerId);
       if (refJob) {
@@ -42,12 +55,10 @@ const JobList: React.FC<JobListProps> = ({ searchTerm, onEditJob, filterCustomer
       }
     }
     
-    // Filter by status tab (Only if not in History view)
     if (!filterCustomerId && activeFilter !== 'All') {
       list = list.filter(j => j.status === activeFilter);
     }
     
-    // Filter by search term
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       list = list.filter(j => 
@@ -57,15 +68,12 @@ const JobList: React.FC<JobListProps> = ({ searchTerm, onEditJob, filterCustomer
       );
     }
     
-    // Newest first by default
-    // Safe Sort: Handles both string and numeric date types
     return list.sort((a, b) => new Date(b.dateIn).getTime() - new Date(a.dateIn).getTime());
   }, [jobs, activeFilter, searchTerm, filterCustomerId]);
 
   const historyStats = useMemo(() => {
     if (!filterCustomerId || filteredJobs.length === 0) return null;
     
-    // Safe Sort: Handles both string and numeric date types
     const customerJobs = [...filteredJobs].sort((a, b) => new Date(a.dateIn).getTime() - new Date(b.dateIn).getTime());
     const totalSpend = customerJobs.reduce((sum, j) => sum + (j.charges || 0), 0);
     const uniqueVehicles = new Set(customerJobs.map(j => j.vehicleNumber)).size;
@@ -107,7 +115,6 @@ const JobList: React.FC<JobListProps> = ({ searchTerm, onEditJob, filterCustomer
 
   const getVisitNumber = (jobId: string) => {
     if (!filterCustomerId) return null;
-    // Safe Sort: Handles both string and numeric date types
     const customerJobs = [...filteredJobs].sort((a, b) => new Date(a.dateIn).getTime() - new Date(b.dateIn).getTime());
     const index = customerJobs.findIndex(j => j.id === jobId);
     return index !== -1 ? index + 1 : null;
@@ -160,14 +167,14 @@ const JobList: React.FC<JobListProps> = ({ searchTerm, onEditJob, filterCustomer
                 <DollarSign size={16} />
                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Total Spend</span>
               </div>
-              <p className="text-3xl font-black text-gray-800">${historyStats.totalSpend.toLocaleString()}</p>
+              <p className="text-3xl font-black text-gray-800">₹{historyStats.totalSpend.toLocaleString()}</p>
             </div>
             <div className="p-6 text-center">
               <div className="flex items-center justify-center gap-2 text-amber-600 mb-1">
                 <Calendar size={16} />
                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">First Visit</span>
               </div>
-              <p className="text-sm font-black text-gray-800">{new Date(historyStats.firstVisit).toLocaleDateString()}</p>
+              <p className="text-sm font-black text-gray-800">{formatDate(historyStats.firstVisit)}</p>
             </div>
             <div className="p-6 text-center">
               <div className="flex items-center justify-center gap-2 text-indigo-600 mb-1">
@@ -279,14 +286,18 @@ const JobCard: React.FC<{
             <p className="text-sm text-slate-700 font-medium leading-relaxed">{job.services}</p>
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gray-50/50 p-3 rounded-xl border border-gray-100">
-               <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest mb-0.5">Check-in Date</p>
-               <p className="text-xs font-bold text-gray-700">{new Date(job.dateIn).toLocaleDateString()}</p>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-gray-50/50 p-2.5 rounded-xl border border-gray-100">
+               <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest mb-0.5">Check-in</p>
+               <p className="text-[11px] font-bold text-gray-700">{formatDate(job.dateIn)}</p>
             </div>
-            <div className="bg-emerald-50/30 p-3 rounded-xl border border-emerald-100">
-               <p className="text-[9px] text-emerald-600 font-black uppercase tracking-widest mb-0.5">Bill Amount</p>
-               <p className="text-xs font-black text-emerald-700">${job.charges?.toLocaleString() || '0.00'}</p>
+            <div className="bg-blue-50/30 p-2.5 rounded-xl border border-blue-100">
+               <p className="text-[9px] text-blue-600 font-black uppercase tracking-widest mb-0.5">Delivery</p>
+               <p className="text-[11px] font-bold text-blue-700">{formatDate(job.expectedDeliveryDate)}</p>
+            </div>
+            <div className="bg-emerald-50/30 p-2.5 rounded-xl border border-emerald-100">
+               <p className="text-[9px] text-emerald-600 font-black uppercase tracking-widest mb-0.5">Charge</p>
+               <p className="text-[11px] font-black text-emerald-700">₹{job.charges?.toLocaleString() || '0'}</p>
             </div>
           </div>
         </div>

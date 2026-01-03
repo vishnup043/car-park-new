@@ -22,8 +22,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const stats = useMemo(() => {
     return {
       today: jobs.filter(j => {
-        const d = new Date(j.dateIn).toISOString().split('T')[0];
-        return d === todayStr;
+        if (!j.dateIn) return false;
+        // Since dateIn is now YYYY-MM-DD, simple comparison works
+        return j.dateIn === todayStr;
       }).length,
       wip: jobs.filter(j => j.status === JobStatus.IN_PROGRESS).length,
       completed: jobs.filter(j => j.status === JobStatus.COMPLETED).length,
@@ -39,8 +40,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   ];
 
   const recentJobs = useMemo(() => {
-    // Resilient sort using numeric comparison
-    return [...jobs].sort((a, b) => new Date(b.dateIn).getTime() - new Date(a.dateIn).getTime()).slice(0, 5);
+    return [...jobs]
+      .filter(j => j.dateIn && !isNaN(new Date(j.dateIn).getTime()))
+      .sort((a, b) => new Date(b.dateIn).getTime() - new Date(a.dateIn).getTime())
+      .slice(0, 5);
   }, [jobs]);
 
   return (

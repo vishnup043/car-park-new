@@ -44,6 +44,20 @@ const AddJobForm: React.FC<AddJobFormProps> = ({ jobId, onSuccess }) => {
     if (jobId) {
       const job = db.getJobs().find(j => j.id === jobId);
       if (job) {
+        // Safe conversion for form input
+        let deliveryStr = todayStr;
+        if (job.expectedDeliveryDate) {
+          // Robust parser for potential numeric strings in text column
+          const raw = job.expectedDeliveryDate;
+          if (!isNaN(raw as any) && !String(raw).includes('-')) {
+            const d = new Date(Number(raw));
+            if (!isNaN(d.getTime())) deliveryStr = d.toISOString().split('T')[0];
+          } else {
+            const d = new Date(raw);
+            if (!isNaN(d.getTime())) deliveryStr = d.toISOString().split('T')[0];
+          }
+        }
+
         setFormData({
           name: job.customerName,
           mobile: job.customerMobile,
@@ -54,8 +68,7 @@ const AddJobForm: React.FC<AddJobFormProps> = ({ jobId, onSuccess }) => {
           type: job.type,
           color: job.color || '',
           services: job.services,
-          // Use the stored string directly (it's YYYY-MM-DD now)
-          deliveryDate: job.expectedDeliveryDate,
+          deliveryDate: deliveryStr,
           charges: job.charges?.toString() || ''
         });
       }
@@ -74,7 +87,6 @@ const AddJobForm: React.FC<AddJobFormProps> = ({ jobId, onSuccess }) => {
       const existingJob = jobId ? db.getJobs().find(j => j.id === jobId) : null;
       const jId = jobId || Math.random().toString(36).substr(2, 9);
 
-      // Now storing pure ISO strings for database visibility
       const job: Job = {
         id: jId,
         customerName: formData.name,
@@ -86,8 +98,9 @@ const AddJobForm: React.FC<AddJobFormProps> = ({ jobId, onSuccess }) => {
         type: formData.type,
         color: formData.color,
         services: formData.services,
-        dateIn: existingJob ? existingJob.dateIn : todayStr,
-        expectedDeliveryDate: formData.deliveryDate || todayStr,
+        // dateIn follows same logic: use existing as string or current todayStr
+        dateIn: existingJob ? String(existingJob.dateIn) : todayStr,
+        expectedDeliveryDate: formData.deliveryDate || todayStr, // Save as string YYYY-MM-DD
         charges: parseFloat(formData.charges) || 0,
         status: existingJob ? existingJob.status : JobStatus.RECEIVED
       };
@@ -101,8 +114,7 @@ const AddJobForm: React.FC<AddJobFormProps> = ({ jobId, onSuccess }) => {
       }
     } catch (error: any) {
       console.error("Submission failed:", error);
-      // Improved error message extraction
-      const msg = error.message || (typeof error === 'string' ? error : 'Check your Supabase column types (change to TEXT or DATE)');
+      const msg = error.message || (typeof error === 'string' ? error : JSON.stringify(error));
       alert(`Submission Error: ${msg}`);
     } finally {
       setIsSubmitting(false);
@@ -220,7 +232,7 @@ const AddJobForm: React.FC<AddJobFormProps> = ({ jobId, onSuccess }) => {
               <textarea rows={3} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800 outline-none focus:bg-white focus:ring-2 focus:ring-blue-100 transition resize-none" placeholder="Work description..." value={formData.services} onChange={e => setFormData({...formData, services: e.target.value})} />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input label="Estimated Handover" type="date" min={todayStr} required value={formData.deliveryDate} onChange={v => setFormData({...formData, deliveryDate: v})} />
-                <Input label="Estimated Charges ($)" type="number" value={formData.charges} onChange={v => setFormData({...formData, charges: v})} />
+                <Input label="Estimated Charges (₹)" type="number" value={formData.charges} onChange={v => setFormData({...formData, charges: v})} />
               </div>
               {!jobId && db.getConfig().groupInviteLink && (
                 <div onClick={() => setInviteToGroup(!inviteToGroup)} className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between ${inviteToGroup ? 'bg-emerald-50 border-emerald-200' : 'bg-gray-50 border-gray-200'}`}>

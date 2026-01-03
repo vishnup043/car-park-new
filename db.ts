@@ -18,6 +18,22 @@ export interface ShopConfig {
 let _jobs: Job[] = [];
 let _config: ShopConfig = { groupInviteLink: '' };
 
+// Helper to normalize dates from the DB (handles numeric strings, numbers, and ISO dates)
+const normalizeDate = (val: any): string => {
+  if (!val) return new Date().toISOString().split('T')[0];
+  // If it's a numeric timestamp string or number, convert to ISO date
+  if (!isNaN(val) && !String(val).includes('-')) {
+    const d = new Date(Number(val));
+    return isNaN(d.getTime()) ? new Date().toISOString().split('T')[0] : d.toISOString().split('T')[0];
+  }
+  // Try parsing as ISO/standard date string
+  const d = new Date(val);
+  if (isNaN(d.getTime())) return new Date().toISOString().split('T')[0];
+  
+  // Return YYYY-MM-DD for consistency
+  return d.toISOString().split('T')[0];
+};
+
 export const db = {
   init: async () => {
     try {
@@ -31,7 +47,12 @@ export const db = {
 
       if (jobsError) throw jobsError;
       
-      _jobs = jobs || [];
+      _jobs = (jobs || []).map(j => ({
+        ...j,
+        dateIn: normalizeDate(j.dateIn),
+        expectedDeliveryDate: normalizeDate(j.expectedDeliveryDate)
+      }));
+
       if (configs) {
         _config = configs as unknown as ShopConfig;
       }
@@ -67,8 +88,8 @@ export const db = {
       type: job.type,
       color: job.color,
       services: job.services,
-      dateIn: job.dateIn,
-      expectedDeliveryDate: job.expectedDeliveryDate,
+      dateIn: String(job.dateIn), // Saved as string
+      expectedDeliveryDate: String(job.expectedDeliveryDate), // Save as TEXT
       charges: job.charges,
       status: job.status
     });
@@ -81,12 +102,9 @@ export const db = {
 
   getCustomers: (): Customer[] => {
     const map = new Map<string, Customer>();
-    // Sort resiliently: Handle both string dates and numeric timestamps
-    const sorted = [..._jobs].sort((a, b) => {
-      const dateA = new Date(a.dateIn).getTime();
-      const dateB = new Date(b.dateIn).getTime();
-      return dateB - dateA;
-    });
+    const sorted = [..._jobs]
+      .filter(j => j.dateIn && !isNaN(new Date(j.dateIn).getTime()))
+      .sort((a, b) => new Date(b.dateIn).getTime() - new Date(a.dateIn).getTime());
     
     sorted.forEach(job => {
       const mobile = job.customerMobile;
