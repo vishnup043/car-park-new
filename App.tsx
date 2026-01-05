@@ -70,8 +70,8 @@ const App: React.FC = () => {
   if (!isDbReady) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
-        <div className="bg-blue-600 p-4 rounded-3xl shadow-xl shadow-blue-200 animate-bounce">
-          <Wrench className="text-white w-10 h-10" />
+        <div className="bg-black p-4 rounded-3xl shadow-xl shadow-blue-200 animate-bounce">
+                <img src="/images/logo.jpg" width="130" height="100"></img>
         </div>
         <div className="flex items-center gap-2 text-slate-400 font-black uppercase tracking-widest text-xs">
           <Loader2 className="animate-spin" size={16} />
@@ -86,19 +86,19 @@ const App: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-600 to-indigo-800">
         <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
           <div className="text-center mb-8">
-            <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Wrench className="text-blue-600 w-8 h-8" />
+            <div className="bg-black w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <img src="/images/logo.jpg" className="rounded-full"></img>
             </div>
-            <h1 className="text-2xl font-bold text-gray-800">New Car Park Manager</h1>
+            <h1 className="text-2xl font-bold text-gray-800">New Car Park</h1>
             <p className="text-gray-500">Sign in to manage your shop</p>
           </div>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number</label>
               <input type="tel" className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" placeholder="9876543210" required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Admin PIN</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
               <input type="password" placeholder="****" className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" required />
             </div>
             <button type="submit" className="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg shadow-lg transition transform active:scale-95">
@@ -114,7 +114,7 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-slate-50 pb-24 lg:pb-0 lg:pl-64 transition-all duration-300">
       <aside className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-gray-200 z-50">
         <div className="p-6 flex items-center gap-3 border-b border-gray-100">
-          <div className="bg-blue-600 p-2 rounded-lg"><Wrench className="text-white w-6 h-6" /></div>
+          <div className="bg-blue-600 p-2 rounded-lg"><Car className="text-white" /></div>
           <span className="font-bold text-xl text-gray-800">New Car Park</span>
         </div>
         <nav className="flex-1 p-4 space-y-2">
@@ -133,7 +133,7 @@ const App: React.FC = () => {
 
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200 px-4 py-3 lg:px-8 flex items-center justify-between">
         <div className="lg:hidden flex items-center gap-2">
-          <Wrench className="text-blue-600 w-6 h-6" /> <span className="font-bold text-lg">New Car Park</span>
+          <Car className="text-blue-600" /> <span className="font-bold text-lg">New Car Park</span>
         </div>
         <div className="hidden lg:block text-2xl font-black text-gray-800 capitalize tracking-tight">
           {editingJobId ? 'Modify Record' : currentView.replace('-', ' ')}
