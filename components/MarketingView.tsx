@@ -283,7 +283,7 @@ const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
               <div 
                 key={customer.id} 
                 onClick={() => toggleSelectOne(customer.id)} 
-                className={`p-6 rounded-[2.25rem] border-2 transition-all cursor-pointer flex items-center justify-between group ${
+                className={`p-4 rounded-[2.25rem] border-2 transition-all cursor-pointer flex items-center justify-between group ${
                   selectedIds.has(customer.id) ? 'border-indigo-600 bg-indigo-50/50 shadow-xl shadow-indigo-500/5' : 'border-gray-50 bg-white hover:border-indigo-200 hover:shadow-lg'
                 }`}
               >
