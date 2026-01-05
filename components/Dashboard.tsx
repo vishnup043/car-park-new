@@ -120,7 +120,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Date Filter Dropdown */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+        <div className="grid md:grid-cols-2 items-center gap-3">
           <div className="relative" ref={dropdownRef}>
             <button 
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -165,17 +165,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             <div className="flex items-center gap-2 animate-in slide-in-from-left-4 duration-300">
               <input 
                 type="date" 
-                className="bg-white border border-gray-100 rounded-2xl px-4 py-3 text-sm font-bold text-gray-700 outline-none focus:ring-4 focus:ring-blue-50 transition shadow-sm"
+                className="w-full bg-white border border-gray-100 rounded-2xl px-4 py-3 text-sm font-bold text-gray-700 outline-none focus:ring-4 focus:ring-blue-50 transition shadow-sm"
                 value={customDate}
                 onChange={(e) => setCustomDate(e.target.value)}
               />
             </div>
           )}
-        </div>
-        
-        <div className="hidden md:flex items-center gap-2 text-gray-400">
-          <Clock size={14} />
-          <span className="text-[10px] font-black uppercase tracking-widest">Live Updates</span>
         </div>
       </div>
 
