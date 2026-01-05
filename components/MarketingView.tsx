@@ -308,7 +308,7 @@ const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
       {selectedIds.size > 0 && !isBlasting && (
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[94%] max-w-2xl bg-slate-900/90 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-3 md:p-5 flex items-center justify-between shadow-2xl z-[100] animate-in slide-in-from-bottom-10">
           <div className="flex items-center gap-3 md:gap-6 pl-2 md:pl-4">
-            <div className="w-12 h-12 md:w-16 md:h-16 bg-indigo-600 rounded-[1rem] md:rounded-[1.25rem] flex items-center justify-center text-white font-black text-xl md:text-2xl shadow-2xl shadow-indigo-500/40">
+            <div className="w-10 h-10 md:w-16 md:h-16 bg-indigo-600 rounded-[1rem] md:rounded-[1.25rem] flex items-center justify-center text-white font-black text-xl md:text-2xl shadow-2xl shadow-indigo-500/40">
               {selectedIds.size}
             </div>
             <div>
@@ -326,10 +326,10 @@ const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
             </button>
             <button 
               onClick={startBlast} 
-              className="flex items-center gap-2 md:gap-3 bg-yellow-400 hover:bg-yellow-300 text-indigo-950 px-5 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl font-black text-xs md:text-sm uppercase tracking-wider transition shadow-2xl shadow-yellow-500/30 active:scale-95"
+              className="flex items-center gap-2 md:gap-3 bg-yellow-400 hover:bg-yellow-300 text-indigo-950 px-2 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl font-black text-xs md:text-sm uppercase tracking-wider transition shadow-2xl shadow-yellow-500/30 active:scale-95"
             >
               <Zap size={20} fill="currentColor" /> 
-              <span>Blast Now</span>
+              <span>Send</span>
             </button>
           </div>
         </div>

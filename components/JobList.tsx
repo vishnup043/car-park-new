@@ -13,7 +13,7 @@ import {
   History as HistoryIcon,
   TrendingUp,
   Calendar,
-  DollarSign,
+  IndianRupee,
   MapPin,
   Tag
 } from 'lucide-react';
@@ -164,7 +164,7 @@ const JobList: React.FC<JobListProps> = ({ searchTerm, onEditJob, filterCustomer
             </div>
             <div className="p-6 text-center">
               <div className="flex items-center justify-center gap-2 text-emerald-600 mb-1">
-                <DollarSign size={16} />
+                <IndianRupee size={16} />
                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Total Spend</span>
               </div>
               <p className="text-3xl font-black text-gray-800">₹{historyStats.totalSpend.toLocaleString()}</p>
