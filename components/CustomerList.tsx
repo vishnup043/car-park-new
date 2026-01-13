@@ -36,7 +36,7 @@ const CustomerList: React.FC<CustomerListProps> = ({ searchTerm, onViewHistory }
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-black text-gray-800 tracking-tight">Client Database</h2>
+          <h2 className="md:text-3xl text-lg font-black text-gray-800 tracking-tight">Client Database</h2>
           <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-0.5">Total Unique Contacts: {filtered.length}</p>
         </div>
       </div>

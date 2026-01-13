@@ -171,7 +171,7 @@ const AddJobForm: React.FC<AddJobFormProps> = ({ jobId, onSuccess }) => {
           <StepLine active={step >= 3} />
           <StepCircle num={3} active={step >= 3} done={step > 3} />
         </div>
-        <span className="text-white font-bold text-xs uppercase tracking-widest">
+        <span className="text-white font-bold text-xs uppercase pl-4">
           {jobId ? 'Edit Record' : 'Client Intake'}
         </span>
       </div>
@@ -184,9 +184,9 @@ const AddJobForm: React.FC<AddJobFormProps> = ({ jobId, onSuccess }) => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input label="Customer Name" required value={formData.name} onChange={v => setFormData({...formData, name: v})} />
-              <Input label="WhatsApp Phone" required type="tel" placeholder="e.g. 9876543210" value={formData.mobile} onChange={v => setFormData({...formData, mobile: v})} />
+              <Input label="WhatsApp Number" required type="tel" placeholder="e.g. 9876543210" value={formData.mobile} onChange={v => setFormData({...formData, mobile: v})} />
               <div className="md:col-span-2">
-                <Input label="Residential Locality" value={formData.address} onChange={v => setFormData({...formData, address: v})} />
+                <Input label="Location" value={formData.address} onChange={v => setFormData({...formData, address: v})} />
               </div>
             </div>
             <button type="button" onClick={() => setStep(2)} className="w-full mt-6 flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-4 rounded-2xl hover:bg-blue-700 transition active:scale-95 shadow-lg shadow-blue-100">
@@ -204,9 +204,9 @@ const AddJobForm: React.FC<AddJobFormProps> = ({ jobId, onSuccess }) => {
               <Car size={20} /> <h3 className="font-bold">Vehicle Details</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input label="Plate Number" placeholder="e.g. MH 12 AB 1234" required value={formData.vehicleNumber} onChange={v => setFormData({...formData, vehicleNumber: v})} />
-              <Input label="Manufacturer" placeholder="e.g. Maruti" required value={formData.brand} onChange={v => setFormData({...formData, brand: v})} />
-              <Input label="Model Name" placeholder="e.g. Swift" required value={formData.model} onChange={v => setFormData({...formData, model: v})} />
+              <Input label="Number" placeholder="e.g. MH 12 AB 1234" required value={formData.vehicleNumber} onChange={v => setFormData({...formData, vehicleNumber: v})} />
+              <Input label="Brand" placeholder="e.g. Maruti" required value={formData.brand} onChange={v => setFormData({...formData, brand: v})} />
+              <Input label="Model" placeholder="e.g. Swift" required value={formData.model} onChange={v => setFormData({...formData, model: v})} />
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5 ml-1">Type</label>
                 <select className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800 outline-none focus:bg-white focus:ring-2 focus:ring-blue-100 transition" value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}>
