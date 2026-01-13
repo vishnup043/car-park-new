@@ -13,7 +13,7 @@ import {
   History as HistoryIcon,
   TrendingUp,
   Calendar,
-  IndianRupee,
+  DollarSign,
   MapPin,
   Tag
 } from 'lucide-react';
@@ -164,7 +164,7 @@ const JobList: React.FC<JobListProps> = ({ searchTerm, onEditJob, filterCustomer
             </div>
             <div className="p-6 text-center">
               <div className="flex items-center justify-center gap-2 text-emerald-600 mb-1">
-                <IndianRupee size={16} />
+                <DollarSign size={16} />
                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Total Spend</span>
               </div>
               <p className="text-3xl font-black text-gray-800">₹{historyStats.totalSpend.toLocaleString()}</p>
@@ -303,25 +303,25 @@ const JobCard: React.FC<{
         </div>
 
         <div className="mt-6 pt-5 border-t border-gray-100 flex items-center justify-between gap-3">
-          {job.status !== JobStatus.DELIVERED ? (
-            <div className="flex-1 relative group/select">
-              <select 
-                value={job.status}
-                onChange={(e) => onStatusUpdate(job.id, e.target.value as JobStatus)}
-                className="w-full bg-slate-100 border-none rounded-2xl px-5 py-3 text-xs font-black text-slate-700 outline-none focus:ring-4 focus:ring-blue-100 transition cursor-pointer appearance-none uppercase tracking-widest"
-              >
-                <option value={JobStatus.RECEIVED}>Received</option>
-                <option value={JobStatus.IN_PROGRESS}>Work Started</option>
-                <option value={JobStatus.COMPLETED}>Ready / Completed</option>
-                <option value={JobStatus.DELIVERED}>Delivered to Owner</option>
-              </select>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                <ChevronRight size={16} className="rotate-90" />
-              </div>
+          <div className="flex-1 relative group/select">
+            <select 
+              value={job.status}
+              onChange={(e) => onStatusUpdate(job.id, e.target.value as JobStatus)}
+              className={`w-full border-none rounded-2xl px-5 py-3 text-xs font-black outline-none focus:ring-4 transition cursor-pointer appearance-none uppercase tracking-widest ${
+                job.status === JobStatus.DELIVERED 
+                  ? 'bg-slate-100 text-slate-500 focus:ring-slate-100' 
+                  : 'bg-slate-100 text-slate-700 focus:ring-blue-100'
+              }`}
+            >
+              <option value={JobStatus.RECEIVED}>Received</option>
+              <option value={JobStatus.IN_PROGRESS}>Work Started</option>
+              <option value={JobStatus.COMPLETED}>Ready / Completed</option>
+              <option value={JobStatus.DELIVERED}>Delivered to Owner</option>
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+              <ChevronRight size={16} className="rotate-90" />
             </div>
-          ) : (
-            <div className="flex-1 py-3 text-center text-[10px] font-black text-slate-400 bg-slate-50 rounded-2xl uppercase tracking-widest border border-slate-100">Successfully Delivered</div>
-          )}
+          </div>
           
           <button 
             onClick={() => onNotify(job)} 

@@ -6,61 +6,106 @@ const SUPABASE_KEY = 'sb_publishable_MPjy2-QUABnpjHJw-sePUA_ujv6-Bs2';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const STORAGE_KEYS = {
-  JOBS: 'autocare_flat_jobs',
-  CONFIG: 'autocare_config'
-};
-
 export interface ShopConfig {
   groupInviteLink: string;
+  adminPhone1: string;
+  adminPhone2: string;
+  adminEmail1: string;
+  adminEmail2: string;
+  adminPin: string;
+  recoveryKey: string;
+  emailjsServiceId?: string;
+  emailjsTemplateId?: string;
+  emailjsPublicKey?: string;
 }
 
-let _jobs: Job[] = [];
-let _config: ShopConfig = { groupInviteLink: '' };
+const generateRecoveryKey = () => {
+  return Math.random().toString(36).substring(2, 8).toUpperCase() + '-' + 
+         Math.random().toString(36).substring(2, 8).toUpperCase();
+};
 
-// Helper to normalize dates from the DB (handles numeric strings, numbers, and ISO dates)
+const LOCAL_STORAGE_KEY = 'ncp_local_config_v4';
+
+const getLocalConfig = (): ShopConfig => {
+  const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch (e) {
+      console.error("Failed to parse local config");
+    }
+  }
+  return { 
+    groupInviteLink: '',
+    adminPhone1: '9605877043',
+    adminPhone2: '9895908879',
+    adminEmail1: '',
+    adminEmail2: '',
+    adminPin: '1234',
+    recoveryKey: generateRecoveryKey(),
+    emailjsServiceId: '',
+    emailjsTemplateId: '',
+    emailjsPublicKey: ''
+  };
+};
+
+let _jobs: Job[] = [];
+let _config: ShopConfig = getLocalConfig();
+
 const normalizeDate = (val: any): string => {
   if (!val) return new Date().toISOString().split('T')[0];
-  // If it's a numeric timestamp string or number, convert to ISO date
   if (!isNaN(val) && !String(val).includes('-')) {
     const d = new Date(Number(val));
     return isNaN(d.getTime()) ? new Date().toISOString().split('T')[0] : d.toISOString().split('T')[0];
   }
-  // Try parsing as ISO/standard date string
   const d = new Date(val);
   if (isNaN(d.getTime())) return new Date().toISOString().split('T')[0];
-  
-  // Return YYYY-MM-DD for consistency
   return d.toISOString().split('T')[0];
 };
 
 export const db = {
   init: async () => {
     try {
-      const [
-        { data: jobs, error: jobsError },
-        { data: configs, error: configError }
-      ] = await Promise.all([
-        supabase.from('customers').select('*'),
-        supabase.from('config').select('*').eq('id', 'main').single()
-      ]);
-
-      if (jobsError) throw jobsError;
-      
-      _jobs = (jobs || []).map(j => ({
-        ...j,
-        dateIn: normalizeDate(j.dateIn),
-        expectedDeliveryDate: normalizeDate(j.expectedDeliveryDate)
-      }));
-
-      if (configs) {
-        _config = configs as unknown as ShopConfig;
+      // 1. Fetch Jobs (Customers table)
+      const { data: jobs, error: jobsError } = await supabase.from('customers').select('*');
+      if (jobsError) {
+        console.warn('Customers table sync failed:', jobsError.message);
+      } else if (jobs) {
+        _jobs = jobs.map(j => ({
+          ...j,
+          // Robust mapping for potential lowercase keys from DB
+          customerName: j.customerName ?? j.customername,
+          customerMobile: j.customerMobile ?? j.customermobile,
+          customerAddress: j.customerAddress ?? j.customeraddress,
+          vehicleNumber: j.vehicleNumber ?? j.vehiclenumber,
+          expectedDeliveryDate: normalizeDate(j.expectedDeliveryDate ?? j.expecteddeliverydate),
+          dateIn: normalizeDate(j.dateIn ?? j.datein),
+        }));
       }
-      console.log('Database synchronized with Supabase successfully');
+
+      // 2. Fetch Config
+      const { data: config, error: configError } = await supabase.from('config').select('*').eq('id', 'main').single();
+      
+      if (config) {
+        // Robust mapping for case-sensitivity issues
+        _config = {
+          groupInviteLink: config.groupInviteLink ?? config.groupinvitelink ?? _config.groupInviteLink,
+          adminPhone1: config.adminPhone1 ?? config.adminphone1 ?? _config.adminPhone1,
+          adminPhone2: config.adminPhone2 ?? config.adminphone2 ?? _config.adminPhone2,
+          adminEmail1: config.adminEmail1 ?? config.adminemail1 ?? _config.adminEmail1,
+          adminEmail2: config.adminEmail2 ?? config.adminemail2 ?? _config.adminEmail2,
+          adminPin: config.adminPin ?? config.adminpin ?? _config.adminPin,
+          recoveryKey: config.recoveryKey ?? config.recoverykey ?? _config.recoveryKey,
+          emailjsServiceId: config.emailjsServiceId ?? config.emailjsserviceid ?? _config.emailjsServiceId,
+          emailjsTemplateId: config.emailjsTemplateId ?? config.emailjstemplateid ?? _config.emailjsTemplateId,
+          emailjsPublicKey: config.emailjsPublicKey ?? config.emailjspublickey ?? _config.emailjsPublicKey,
+        };
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(_config));
+      }
+
+      console.log('Cloud DB sync complete.');
     } catch (error: any) {
-      console.error('Initial database sync failed:', error.message || error);
-      _jobs = JSON.parse(localStorage.getItem(STORAGE_KEYS.JOBS) || '[]');
-      _config = JSON.parse(localStorage.getItem(STORAGE_KEYS.CONFIG) || '{"groupInviteLink":""}');
+      console.error('Database sync general failure:', error.message || error);
     }
   },
 
@@ -73,10 +118,8 @@ export const db = {
     else list.push(job);
     _jobs = list;
 
-    // Cache locally
-    localStorage.setItem(STORAGE_KEYS.JOBS, JSON.stringify(list));
-
-    // Persist to Supabase
+    // Use quoted keys in payload if possible or rely on the SDK to handle it.
+    // Explicit mapping to camelCase.
     const { error } = await supabase.from('customers').upsert({
       id: job.id,
       customerName: job.customerName,
@@ -88,15 +131,17 @@ export const db = {
       type: job.type,
       color: job.color,
       services: job.services,
-      dateIn: String(job.dateIn), // Saved as string
-      expectedDeliveryDate: String(job.expectedDeliveryDate), // Save as TEXT
+      dateIn: String(job.dateIn),
+      expectedDeliveryDate: String(job.expectedDeliveryDate),
       charges: job.charges,
       status: job.status
     });
 
     if (error) {
-      console.error('Supabase Error Detail:', error);
-      throw new Error(error.message || 'Unknown Supabase Error');
+      if (error.message.includes('column') && error.message.includes('not found')) {
+        throw new Error(`DB Error: Column "${error.message.split("'")[1]}" is missing. Please run schema.sql in Supabase.`);
+      }
+      throw new Error(error.message || 'Supabase Job Save Error');
     }
   },
 
@@ -127,19 +172,42 @@ export const db = {
     if (job) {
       job.status = status;
       _jobs = list;
-      localStorage.setItem(STORAGE_KEYS.JOBS, JSON.stringify(list));
       const { error } = await supabase.from('customers').update({ status }).eq('id', jobId);
-      if (error) throw new Error(error.message || 'Failed to update status in cloud');
+      if (error) throw new Error(error.message || 'Update failed');
       return job;
     }
     return null;
   },
 
   getConfig: (): ShopConfig => _config,
+  
   saveConfig: async (config: ShopConfig) => {
     _config = config;
-    localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(config));
-    const { error } = await supabase.from('config').upsert({ id: 'main', ...config });
-    if (error) throw new Error(error.message || 'Failed to save config');
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(config));
+    
+    const payload = { 
+      id: 'main',
+      adminPin: config.adminPin,
+      groupInviteLink: config.groupInviteLink,
+      recoveryKey: config.recoveryKey,
+      adminPhone1: config.adminPhone1,
+      adminPhone2: config.adminPhone2,
+      adminEmail1: config.adminEmail1,
+      adminEmail2: config.adminEmail2,
+      emailjsServiceId: config.emailjsServiceId,
+      emailjsTemplateId: config.emailjsTemplateId,
+      emailjsPublicKey: config.emailjsPublicKey
+    };
+
+    const { error } = await supabase.from('config').upsert(payload);
+    if (error) {
+      console.error("Supabase Config sync failed:", error.message);
+      // Detailed error for missing columns to guide the user to run SQL
+      if (error.message.toLowerCase().includes("column") && error.message.toLowerCase().includes("not found")) {
+        const missingColumn = error.message.match(/'([^']+)'/)?.[1] || "Required column";
+        throw new Error(`CRITICAL: The column "${missingColumn}" does not exist in your Supabase 'config' table. Please run the SQL script in schema.sql using the Supabase SQL Editor.`);
+      }
+      throw new Error(`Cloud sync error: ${error.message}`);
+    }
   }
 };

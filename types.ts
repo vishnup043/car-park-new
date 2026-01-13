@@ -32,7 +32,8 @@ export interface Customer {
   createdAt: string; // Changed to string
 }
 
-export type AppView = 'dashboard' | 'jobs' | 'customers' | 'add-job' | 'marketing' | 'reports';
+// Fix: Included 'settings' in the AppView union type to allow navigation to the settings screen in App.tsx
+export type AppView = 'dashboard' | 'jobs' | 'customers' | 'add-job' | 'marketing' | 'reports' | 'settings';
 
 export interface DashboardStats {
   todayTotal: number;

@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useRef } from 'react';
 import { 
   Megaphone, 
@@ -135,8 +136,10 @@ const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
     setSelectedIds(next);
   };
 
+  // Fixed handleSaveConfig to include the full ShopConfig object
   const handleSaveConfig = () => {
-    db.saveConfig({ groupInviteLink: groupLink });
+    const currentConfig = db.getConfig();
+    db.saveConfig({ ...currentConfig, groupInviteLink: groupLink });
     setSaveFeedback(true);
     setTimeout(() => setSaveFeedback(false), 2000);
   };
@@ -152,7 +155,7 @@ const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
         <div className="flex items-center gap-4">
           <button onClick={onBack} className="p-2.5 hover:bg-white rounded-2xl transition text-gray-500 border border-gray-100 shadow-sm"><ArrowLeft size={24} /></button>
           <div>
-            <h2 className="md:text-3xl text-xl font-black text-gray-800 tracking-tight">Campaign Center</h2>
+            <h2 className="text-3xl font-black text-gray-800 tracking-tight">Campaign Center</h2>
           </div>
         </div>
         <button 
@@ -226,7 +229,7 @@ const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
           <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-indigo-500/5">
             <div className="flex items-center gap-3 mb-4 text-indigo-600">
               <Megaphone size={22} strokeWidth={3} />
-              <h3 className="font-black text-lg tracking-tight">Campaign Template</h3>
+              <h3 className="font-black text-lg uppercase tracking-tight">Campaign Template</h3>
             </div>
             
             <div className="space-y-4">
@@ -242,7 +245,7 @@ const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
           <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-indigo-500/5">
             <div className="flex items-center gap-3 mb-4 text-emerald-600">
               <LinkIcon size={22} strokeWidth={3} />
-              <h3 className="font-black text-lg tracking-tight">Updates Group Link</h3>
+              <h3 className="font-black text-lg uppercase tracking-tight">Updates Group Link</h3>
             </div>
             <input 
               type="text" 
@@ -258,9 +261,9 @@ const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
         </div>
 
         <div className="lg:col-span-2 space-y-6">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-6 px-4">
             <div className="flex items-center gap-6">
-              <h3 className="font-black text-gray-800 md:text-2xl text-lg tracking-tighter">Contacts ({filteredCustomers.length})</h3>
+              <h3 className="font-black text-gray-800 text-2xl tracking-tighter">Contacts ({filteredCustomers.length})</h3>
               <button onClick={toggleSelectAll} className="flex items-center gap-2 text-xs font-black uppercase text-indigo-600 hover:text-indigo-700 transition">
                 {selectedIds.size === filteredCustomers.length ? <CheckSquare size={20} /> : <Square size={20} />} 
                 {selectedIds.size === filteredCustomers.length ? 'Deselect' : 'Select Visible'}
@@ -283,7 +286,7 @@ const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
               <div 
                 key={customer.id} 
                 onClick={() => toggleSelectOne(customer.id)} 
-                className={`p-4 rounded-[2.25rem] border-2 transition-all cursor-pointer flex items-center justify-between group ${
+                className={`p-6 rounded-[2.25rem] border-2 transition-all cursor-pointer flex items-center justify-between group ${
                   selectedIds.has(customer.id) ? 'border-indigo-600 bg-indigo-50/50 shadow-xl shadow-indigo-500/5' : 'border-gray-50 bg-white hover:border-indigo-200 hover:shadow-lg'
                 }`}
               >
@@ -308,7 +311,7 @@ const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
       {selectedIds.size > 0 && !isBlasting && (
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[94%] max-w-2xl bg-slate-900/90 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-3 md:p-5 flex items-center justify-between shadow-2xl z-[100] animate-in slide-in-from-bottom-10">
           <div className="flex items-center gap-3 md:gap-6 pl-2 md:pl-4">
-            <div className="w-10 h-10 md:w-16 md:h-16 bg-indigo-600 rounded-[1rem] md:rounded-[1.25rem] flex items-center justify-center text-white font-black text-xl md:text-2xl shadow-2xl shadow-indigo-500/40">
+            <div className="w-12 h-12 md:w-16 md:h-16 bg-indigo-600 rounded-[1rem] md:rounded-[1.25rem] flex items-center justify-center text-white font-black text-xl md:text-2xl shadow-2xl shadow-indigo-500/40">
               {selectedIds.size}
             </div>
             <div>
@@ -326,10 +329,10 @@ const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
             </button>
             <button 
               onClick={startBlast} 
-              className="flex items-center gap-2 md:gap-3 bg-yellow-400 hover:bg-yellow-300 text-indigo-950 px-2 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl font-black text-xs md:text-sm uppercase tracking-wider transition shadow-2xl shadow-yellow-500/30 active:scale-95"
+              className="flex items-center gap-2 md:gap-3 bg-yellow-400 hover:bg-yellow-300 text-indigo-950 px-5 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl font-black text-xs md:text-sm uppercase tracking-wider transition shadow-2xl shadow-yellow-500/30 active:scale-95"
             >
               <Zap size={20} fill="currentColor" /> 
-              <span>Send</span>
+              <span>Blast Now</span>
             </button>
           </div>
         </div>
