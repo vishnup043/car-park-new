@@ -247,7 +247,7 @@ const App: React.FC = () => {
             <div className="space-y-5">
               <div>
                 <div className="flex md:flex-row flex-col gap-4 justify-between mb-2 ml-1">
-                  <label className="block text-[13px] font-black text-gray-400 tracking-widest">WhatsApp Number</label>
+                  <label className="block text-[13px] font-black text-gray-400 tracking-widest">Mobile Number</label>
                   {isAuthorizedNumber && (
                     <button
                       type="button"
@@ -266,8 +266,7 @@ const App: React.FC = () => {
                     type="tel"
                     value={loginPhone}
                     onChange={e => setLoginPhone(e.target.value)}
-                    className="w-full pl-12 pr-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold text-gray-700 text-sm focus:bg-white focus:ring-4 focus:ring-blue-50 transition-all"
-                    placeholder="Enter your whatsApp number "
+                    className="w-full pl-12 pr-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none text-gray-700 font-bold text-sm focus:bg-white focus:ring-4 focus:ring-blue-50 transition-all"
                     required
                   />
                 </div>
@@ -281,7 +280,6 @@ const App: React.FC = () => {
                     type="text"
                     value={loginPin}
                      onChange={e => setLoginPin(e.target.value.replace(/\D/g, ''))}
-                    placeholder="****"
                     className="w-full pl-12 pr-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold text-gray-700 text-sm focus:bg-white focus:ring-4 focus:ring-blue-50 transition-all tracking-[0.5em]"
                     required
                   />
