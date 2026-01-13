@@ -304,10 +304,9 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-slate-50 pb-24 lg:pb-0 lg:pl-64 transition-all duration-300">
       <aside className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-gray-200 z-50">
         <div className="p-6 flex items-center gap-3 border-b border-gray-100">
-          <div className="bg-blue-600 p-2 rounded-lg"><Car className="text-white" /></div>
-          <span className="font-bold text-xl text-gray-800 tracking-tight">New Car Park</span>
+          <div><img src="/images/logo.jpg"></img></div>
         </div>
-        <nav className="flex-1 p-4 space-y-1.5">
+        <nav className="flex-1 p-6 space-y-1.5">
           <NavButton active={currentView === 'dashboard'} onClick={() => setCurrentView('dashboard')} icon={<LayoutDashboard />} label="Dashboard" />
           <NavButton active={currentView === 'jobs'} onClick={() => setCurrentView('jobs')} icon={<Car />} label="Active Jobs" />
           <NavButton active={currentView === 'customers'} onClick={() => setCurrentView('customers')} icon={<Users />} label="Clients" />
@@ -322,9 +321,9 @@ const App: React.FC = () => {
         </div>
       </aside>
 
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200 px-4 py-3 lg:px-8 flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200 px-4 md:py-6 py-3 lg:px-8 flex items-center justify-between">
         <div className="lg:hidden flex items-center gap-2">
-          <Car className="text-blue-600 w-6 h-6" /> <span className="font-black text-lg tracking-tight">New Car Park</span>
+          <img className="rounded-full" src="/images/logo.jpg" width="100" />
         </div>
         <div className="hidden lg:block text-2xl font-black text-gray-800 capitalize tracking-tight">
           {editingJobId ? 'Modify Record' : currentView.replace('-', ' ')}

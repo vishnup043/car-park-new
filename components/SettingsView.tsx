@@ -129,7 +129,7 @@ const SettingsView: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-24 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h2 className="text-3xl font-black text-gray-800 tracking-tight">System Configuration</h2>
+        <h2 className="md:text-3xl text-lg font-black text-gray-800 tracking-tight">System Configuration</h2>
         <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Manage secure access and shop integrations</p>
       </div>
 

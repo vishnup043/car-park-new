@@ -155,7 +155,7 @@ const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
         <div className="flex items-center gap-4">
           <button onClick={onBack} className="p-2.5 hover:bg-white rounded-2xl transition text-gray-500 border border-gray-100 shadow-sm"><ArrowLeft size={24} /></button>
           <div>
-            <h2 className="text-lg font-black text-gray-800 tracking-tight">Campaign Center</h2>
+            <h2 className="md:text-3xl text-lg font-black text-gray-800 tracking-tight">Campaign Center</h2>
           </div>
         </div>
         <button 
@@ -229,7 +229,7 @@ const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
           <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-indigo-500/5">
             <div className="flex items-center gap-3 mb-4 text-indigo-600">
               <Megaphone size={22} strokeWidth={3} />
-              <h3 className="font-black text-lg tracking-tight">Campaign Template</h3>
+              <h3 className="font-black text-lg tracking-tight uppercase">Campaign Template</h3>
             </div>
             
             <div className="space-y-4">
