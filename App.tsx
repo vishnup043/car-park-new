@@ -184,8 +184,8 @@ const App: React.FC = () => {
   if (!isDbReady) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
-        <div className="bg-blue-600 p-4 rounded-3xl shadow-xl animate-bounce">
-          <Wrench className="text-white w-10 h-10" />
+           <div className="bg-black p-4 rounded-3xl shadow-xl shadow-blue-200 animate-bounce">
+                <img src="/images/logo.jpg" width="130" height="100"></img>
         </div>
         <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Initializing Secure Vault...</p>
       </div>
@@ -194,7 +194,7 @@ const App: React.FC = () => {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 relative overflow-hidden">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-white relative overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-500/10 rounded-full blur-[120px]" />
 
         {mockEmail && (
@@ -222,9 +222,10 @@ const App: React.FC = () => {
         <div className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-700 relative z-10">
           <div className="text-center mb-10">
             <div className="bg-black w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
-              <img class="rounded-full" src="/images/logo.jpg"></img>
+              <img className="rounded-full" src="/images/logo.jpg"></img>
             </div>
-            <h1 className="text-3xl font-black text-gray-800 tracking-tight leading-none">New Car Park</h1>
+            <h1 className="text-2xl font-black text-gray-800 tracking-tight leading-none">New Car Park</h1>
+            <p className="py-2">Sign in to manage your shop</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
@@ -232,7 +233,6 @@ const App: React.FC = () => {
               <div className="bg-blue-50 border border-blue-200 px-5 py-4 rounded-2xl text-[11px] font-bold text-blue-800 animate-in slide-in-from-top-2 flex items-center gap-3">
                 <Mail className="shrink-0 text-blue-500" size={20} />
                 <div>
-                  <span className="uppercase tracking-widest text-[9px] text-blue-600 block">Dispatch Ready</span>
                   <span>Check your registered Gmail for the PIN.</span>
                 </div>
               </div>
@@ -247,7 +247,7 @@ const App: React.FC = () => {
             <div className="space-y-5">
               <div>
                 <div className="flex justify-between items-center mb-2 ml-1">
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Admin Number</label>
+                  <label className="block text-[13px] font-black text-gray-400 tracking-widest">WhatsApp Number</label>
                   {isAuthorizedNumber && (
                     <button
                       type="button"
@@ -266,15 +266,15 @@ const App: React.FC = () => {
                     type="tel"
                     value={loginPhone}
                     onChange={e => setLoginPhone(e.target.value)}
-                    className="w-full pl-12 pr-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold text-gray-700 text-lg focus:bg-white focus:ring-4 focus:ring-blue-50 transition-all"
-                    placeholder="Enter phone"
+                    className="w-full pl-12 pr-5 md:py-4 py-2 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold text-gray-700 text-sm focus:bg-white focus:ring-4 focus:ring-blue-50 transition-all"
+                    placeholder="Enter your whatsApp number "
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Access PIN</label>
+                <label className="block text-[13px] font-black text-gray-400 tracking-widest mb-2 ml-1">Access PIN</label>
                 <div className="relative">
                   <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={20} />
                   <input
@@ -282,7 +282,7 @@ const App: React.FC = () => {
                     value={loginPin}
                     onChange={e => setLoginPin(e.target.value)}
                     placeholder="****"
-                    className="w-full pl-12 pr-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:bg-white transition-all font-bold text-gray-700 text-lg tracking-[0.5em]"
+                    className="w-full pl-12 pr-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:bg-white transition-all font-bold text-gray-700 text-sm tracking-[0.5em]"
                     required
                   />
                 </div>
@@ -292,7 +292,7 @@ const App: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmitting || isRequestingEmail}
-              className="w-full bg-blue-600 text-white font-black py-5 rounded-[1.5rem] shadow-2xl transition-all transform active:scale-95 uppercase text-xs tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-blue-700"
+              className="w-full bg-blue-600 text-white font-black py-5 rounded-[1.5rem] transition-all transform active:scale-95 uppercase text-xs tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-blue-700"
             >
               {isSubmitting ? <><Loader2 className="animate-spin" size={18} /> Verifying...</> : <><ArrowRight size={18} /> Access Dashboard</>}
             </button>
@@ -326,7 +326,7 @@ const App: React.FC = () => {
 
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200 px-4 py-3 lg:px-8 flex items-center justify-between">
         <div className="lg:hidden flex items-center gap-2">
-          <Wrench className="text-blue-600 w-6 h-6" /> <span className="font-black text-lg tracking-tight">New Car Park</span>
+          <Car className="text-blue-600 w-6 h-6" /> <span className="font-black text-lg tracking-tight">New Car Park</span>
         </div>
         <div className="hidden lg:block text-2xl font-black text-gray-800 capitalize tracking-tight">
           {editingJobId ? 'Modify Record' : currentView.replace('-', ' ')}

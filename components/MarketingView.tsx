@@ -155,7 +155,7 @@ const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
         <div className="flex items-center gap-4">
           <button onClick={onBack} className="p-2.5 hover:bg-white rounded-2xl transition text-gray-500 border border-gray-100 shadow-sm"><ArrowLeft size={24} /></button>
           <div>
-            <h2 className="text-3xl font-black text-gray-800 tracking-tight">Campaign Center</h2>
+            <h2 className="text-lg font-black text-gray-800 tracking-tight">Campaign Center</h2>
           </div>
         </div>
         <button 
@@ -229,7 +229,7 @@ const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
           <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-indigo-500/5">
             <div className="flex items-center gap-3 mb-4 text-indigo-600">
               <Megaphone size={22} strokeWidth={3} />
-              <h3 className="font-black text-lg uppercase tracking-tight">Campaign Template</h3>
+              <h3 className="font-black text-lg tracking-tight">Campaign Template</h3>
             </div>
             
             <div className="space-y-4">
@@ -261,9 +261,9 @@ const MarketingView: React.FC<MarketingViewProps> = ({ onBack }) => {
         </div>
 
         <div className="lg:col-span-2 space-y-6">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-6 px-4">
-            <div className="flex items-center gap-6">
-              <h3 className="font-black text-gray-800 text-2xl tracking-tighter">Contacts ({filteredCustomers.length})</h3>
+          <div className="flex flex-col sm:flex-row justify-between md:items-center gap-6">
+            <div className="flex justify-between gap-6">
+              <h3 className="font-black text-gray-800 text-xl tracking-tighter">Contacts ({filteredCustomers.length})</h3>
               <button onClick={toggleSelectAll} className="flex items-center gap-2 text-xs font-black uppercase text-indigo-600 hover:text-indigo-700 transition">
                 {selectedIds.size === filteredCustomers.length ? <CheckSquare size={20} /> : <Square size={20} />} 
                 {selectedIds.size === filteredCustomers.length ? 'Deselect' : 'Select Visible'}

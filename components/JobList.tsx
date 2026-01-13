@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { 
   MessageSquare, 
@@ -15,7 +16,9 @@ import {
   Calendar,
   DollarSign,
   MapPin,
-  Tag
+  Tag,
+  Phone,
+  ChevronDown
 } from 'lucide-react';
 import { db } from '../db';
 import { Job, JobStatus, Customer } from '../types';
@@ -113,6 +116,10 @@ const JobList: React.FC<JobListProps> = ({ searchTerm, onEditJob, filterCustomer
     window.open(whatsappUrl, '_blank');
   };
 
+  const handleCall = (mobile: string) => {
+    window.location.href = `tel:${mobile}`;
+  };
+
   const getVisitNumber = (jobId: string) => {
     if (!filterCustomerId) return null;
     const customerJobs = [...filteredJobs].sort((a, b) => new Date(a.dateIn).getTime() - new Date(b.dateIn).getTime());
@@ -140,8 +147,10 @@ const JobList: React.FC<JobListProps> = ({ searchTerm, onEditJob, filterCustomer
                   </div>
                   <h3 className="text-3xl font-black tracking-tight">{historyStats.customer.name}</h3>
                   <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-blue-100/70 font-bold text-sm">
-                    <span className="flex items-center gap-1.5"><MessageSquare size={14} /> {historyStats.customer.mobile}</span>
-                    {historyStats.customer.address && <span className="flex items-center gap-1.5"><MapPin size={14} /> {historyStats.customer.address}</span>}
+                    <span className="flex items-center gap-1.5 opacity-90">
+                      <Phone size={14} fill="currentColor" /> {historyStats.customer.mobile}
+                    </span>
+                    {historyStats.customer.address && <span className="flex items-center gap-1.5 ml-2"><MapPin size={14} /> {historyStats.customer.address}</span>}
                   </div>
                 </div>
               </div>
@@ -194,7 +203,7 @@ const JobList: React.FC<JobListProps> = ({ searchTerm, onEditJob, filterCustomer
               key={status}
               onClick={() => setActiveFilter(status as any)}
               className={`px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${
-                activeFilter === status ? 'bg-blue-600 text-white shadow-xl shadow-blue-200' : 'bg-white text-gray-500 border border-gray-100'
+                activeFilter === status ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'bg-white text-gray-500 border border-gray-100'
               }`}
             >
               {status}
@@ -219,6 +228,7 @@ const JobList: React.FC<JobListProps> = ({ searchTerm, onEditJob, filterCustomer
                 job={job} 
                 onStatusUpdate={updateStatus}
                 onNotify={handleWhatsApp}
+                onCall={() => handleCall(job.customerMobile)}
                 onEdit={() => onEditJob(job.id)}
                 visitNumber={getVisitNumber(job.id)}
                 isHistoryView={!!filterCustomerId}
@@ -242,10 +252,11 @@ const JobCard: React.FC<{
   job: Job; 
   onStatusUpdate: (id: string, s: JobStatus) => void;
   onNotify: (job: Job) => void;
+  onCall: () => void;
   onEdit: () => void;
   visitNumber?: number | null;
   isHistoryView?: boolean;
-}> = ({ job, onStatusUpdate, onNotify, onEdit, visitNumber, isHistoryView }) => {
+}> = ({ job, onStatusUpdate, onNotify, onCall, onEdit, visitNumber, isHistoryView }) => {
   const statusColors = {
     [JobStatus.RECEIVED]: 'bg-blue-50 text-blue-600 border-blue-100',
     [JobStatus.IN_PROGRESS]: 'bg-amber-50 text-amber-600 border-amber-100',
@@ -293,7 +304,7 @@ const JobCard: React.FC<{
             </div>
             <div className="bg-blue-50/30 p-2.5 rounded-xl border border-blue-100">
                <p className="text-[9px] text-blue-600 font-black uppercase tracking-widest mb-0.5">Delivery</p>
-               <p className="text-[11px] font-bold text-blue-700">{formatDate(job.expectedDeliveryDate)}</p>
+               <p className="text-[11px] font-bold text-gray-700">{formatDate(job.expectedDeliveryDate)}</p>
             </div>
             <div className="bg-emerald-50/30 p-2.5 rounded-xl border border-emerald-100">
                <p className="text-[9px] text-emerald-600 font-black uppercase tracking-widest mb-0.5">Charge</p>
@@ -319,17 +330,26 @@ const JobCard: React.FC<{
               <option value={JobStatus.DELIVERED}>Delivered to Owner</option>
             </select>
             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-              <ChevronRight size={16} className="rotate-90" />
+              <ChevronDown size={16} />
             </div>
           </div>
           
-          <button 
-            onClick={() => onNotify(job)} 
-            className="p-4 bg-emerald-600 text-white rounded-2xl hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 active:scale-90"
-            title="Send WhatsApp Update"
-          >
-            <MessageSquare size={20} fill="currentColor" />
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={onCall} 
+              className="w-10 h-10 flex justify-center items-center bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 active:scale-95"
+              title="Call Customer Directly"
+            >
+              <Phone size={18} fill="currentColor" />
+            </button>
+            <button 
+              onClick={() => onNotify(job)} 
+              className="w-10 h-10 flex justify-center items-center bg-emerald-600 text-white rounded-2xl hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 active:scale-95"
+              title="Send WhatsApp Update"
+            >
+              <MessageSquare size={18} fill="currentColor" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
