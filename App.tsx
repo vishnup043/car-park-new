@@ -246,7 +246,7 @@ const App: React.FC = () => {
 
             <div className="space-y-5">
               <div>
-                <div className="flex justify-between items-center mb-2 ml-1">
+                <div className="flex md:flex-row flex-col gap-4 justify-between mb-2 ml-1">
                   <label className="block text-[13px] font-black text-gray-400 tracking-widest">WhatsApp Number</label>
                   {isAuthorizedNumber && (
                     <button
@@ -266,7 +266,7 @@ const App: React.FC = () => {
                     type="tel"
                     value={loginPhone}
                     onChange={e => setLoginPhone(e.target.value)}
-                    className="w-full pl-12 pr-5 md:py-4 py-2 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold text-gray-700 text-sm focus:bg-white focus:ring-4 focus:ring-blue-50 transition-all"
+                    className="w-full pl-12 pr-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold text-gray-700 text-sm focus:bg-white focus:ring-4 focus:ring-blue-50 transition-all"
                     placeholder="Enter your whatsApp number "
                     required
                   />
@@ -278,11 +278,11 @@ const App: React.FC = () => {
                 <div className="relative">
                   <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={20} />
                   <input
-                    type="password"
+                    type="text"
                     value={loginPin}
-                    onChange={e => setLoginPin(e.target.value)}
+                     onChange={e => setLoginPin(e.target.value.replace(/\D/g, ''))}
                     placeholder="****"
-                    className="w-full pl-12 pr-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:bg-white transition-all font-bold text-gray-700 text-sm tracking-[0.5em]"
+                    className="w-full pl-12 pr-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold text-gray-700 text-sm focus:bg-white focus:ring-4 focus:ring-blue-50 transition-all tracking-[0.5em]"
                     required
                   />
                 </div>
@@ -355,8 +355,8 @@ const App: React.FC = () => {
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-gray-200 flex items-center justify-between px-2 py-3 pt-8 z-50 shadow-2xl">
         <MobileNavButton active={currentView === 'dashboard'} onClick={() => setCurrentView('dashboard')} icon={<LayoutDashboard size={20} />} label="Home" />
         <MobileNavButton active={currentView === 'jobs'} onClick={() => setCurrentView('jobs')} icon={<Car size={20} />} label="Jobs" />
-        <div className="absolute left-0 right-0 flex justify-center -top-12 px-1">
-          <button onClick={() => setCurrentView('add-job')} className="bg-blue-600 text-white p-4 rounded-[1.25rem] shadow-2xl shadow-blue-300 ring-8 ring-slate-50 active:scale-90 transition transform"><PlusCircle size={24} /></button>
+        <div className="absolute left-0 right-0 flex justify-center -top-7 px-1">
+          <button onClick={() => setCurrentView('add-job')} className="bg-blue-600 text-white p-3 rounded-[1.25rem] shadow-2xl shadow-blue-300 ring-4 ring-slate-50 active:scale-90 transition transform"><PlusCircle size={24} /></button>
         </div>
         <MobileNavButton active={currentView === 'customers'} onClick={() => setCurrentView('customers')} icon={<Users />} label="Clients" />
         <MobileNavButton active={currentView === 'marketing'} onClick={() => setCurrentView('marketing')} icon={<Megaphone size={20} />} label="Promo" />
